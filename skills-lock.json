@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "clean-ddd-hexagonal": {
+      "source": "ccheney/robust-skills",
+      "sourceType": "github",
+      "computedHash": "37d516cad994acaf692e6d57761601ef9477dce0bc98e8b6b76329e17afe90b6"
+    },
+    "game-architecture": {
+      "source": "opusgamelabs/game-creator",
+      "sourceType": "github",
+      "computedHash": "e7d56f1b637bca15a2f8c35c1780225f97e8df99fad39ae6377398dfeb9178a0"
+    },
+    "game-audio": {
+      "source": "opusgamelabs/game-creator",
+      "sourceType": "github",
+      "computedHash": "eb2ba3da86b490c299638b201efbdc014ca6f45108e5cae9b7ebcdae7c01c22e"
+    },
+    "game-design-theory": {
+      "source": "pluginagentmarketplace/custom-plugin-game-developer",
+      "sourceType": "github",
+      "computedHash": "60a7ad8dd95255ed22840e03d44fdee8be919a19471f723d509da7c43b7bf21b"
+    },
+    "game-designer": {
+      "source": "opusgamelabs/game-creator",
+      "sourceType": "github",
+      "computedHash": "428491168b0dfcb32eb58e71b76ffbc7988a3558d5c2a554c90ef3d0e9ddb993"
+    },
+    "game-qa": {
+      "source": "opusgamelabs/game-creator",
+      "sourceType": "github",
+      "computedHash": "db82414223e6c25758e3861c16b09ffdb2a3e6c93baedf28f0631d116d6b45e9"
+    },
+    "nodejs-backend": {
+      "source": "alinaqi/claude-bootstrap",
+      "sourceType": "github",
+      "computedHash": "f19e62059da07272c6c5749e8ef7dd3e1c238f224a81b0da228d0eb68c8b3ed4"
+    },
+    "nodejs-backend-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "47f9ab40a7ddedd69089da1390080735f6715356916d6fc43f525522887d7dfe"
+    },
+    "phaser-gamedev": {
+      "source": "chongdashu/phaserjs-tinyswords",
+      "sourceType": "github",
+      "computedHash": "7c189dc3905cea3c83b593bdeaba32d134dd3e3da70e7b7663c1e1612def64bf"
+    },
+    "react": {
+      "source": "vercel-labs/json-render",
+      "sourceType": "github",
+      "computedHash": "ba1686f464e4da1e44da6ce2eb38ea56c2af2790f5c911d8cee2a8f2dd93ceb7"
+    },
+    "react-dev": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "da3caa5f2bfd7274fad3f08524ff3ad4f427978773c3e77e7b14e44aaac31d78"
+    },
+    "react:components": {
+      "source": "google-labs-code/stitch-skills",
+      "sourceType": "github",
+      "computedHash": "5e786773a89012ae15b01b5c11942db30b09f935929283d8eb8a30b2da5fabf7"
+    }
+  }
+}

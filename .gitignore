@@ -1,0 +1,42 @@
+# ===================
+# Generales
+# ===================
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sw?
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===================
+# Proyectos (ignorar builds)
+# ===================
+
+# QA
+qa/node_modules/
+qa/test-results/
+qa/playwright-report/
+qa/playwright/.cache/
+qa/videos/
+qa/screenshots/
+
+# Server
+server-cliker-ia/node_modules/
+server-cliker-ia/dist/
+
+# Cliente
+cliker-ia/node_modules/
+cliker-ia/dist/

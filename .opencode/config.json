@@ -1,0 +1,9 @@
+{
+  "provider": "openai",
+  "baseUrl": "http://localhost:11434/v1",
+  "apiKey": "ollama",
+
+  "mcp": {
+    "config": ".opencode/mcp.json"
+  }
+}

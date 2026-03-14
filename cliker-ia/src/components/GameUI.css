@@ -1,0 +1,16 @@
+/* GameUI styles - minimal wrapper */
+.game-wrapper {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+}
+
+.loading {
+  color: #4ecdc4;
+  font-size: 24px;
+  font-family: Arial, sans-serif;
+}
