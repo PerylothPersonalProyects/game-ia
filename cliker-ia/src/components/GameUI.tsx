@@ -5,19 +5,21 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useGame } from '../store/useGameState';
+import { GameProvider, useGameContext } from '../store/GameContext';
 import { Game, MainScene } from '../game/MainScene';
 import type { UIBackend } from '../game/MainScene';
 import { stateToRenderData } from '../game/gameApi';
+import { UpgradesTable } from './UpgradesTable';
+import { GameStats } from './GameStats';
 import './GameUI.css';
 
-export function GameUI() {
+function GameUIInner() {
   const { 
     handleClick, 
     handleBuyUpgrade, 
     gameState,
     isLoaded 
-  } = useGame();
+  } = useGameContext();
   
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<MainScene | null>(null);
@@ -39,14 +41,18 @@ export function GameUI() {
     
     // Configurar cuando la escena esté lista
     const checkScene = setInterval(() => {
-      const scene = gameRef.current?.getMainScene();
+      const game = gameRef.current as unknown as { getMainScene?: () => MainScene | undefined };
+      const scene = game?.getMainScene?.();
       if (scene) {
         clearInterval(checkScene);
         sceneRef.current = scene;
         
         // Configurar backend
         const backend: UIBackend = {
-          onClick: () => handleClick(),
+          onClick: () => {
+            console.log('[GameUI] Phaser onClick triggered');
+            handleClick();
+          },
           onPurchaseUpgrade: (id: string) => handleBuyUpgrade(id),
           onBuyFromShop: () => {},
         };
@@ -86,7 +92,28 @@ export function GameUI() {
 
   return (
     <div className="game-wrapper">
-      <div id="phaser-game" />
+      {/* Stats - en React */}
+      <div className="stats-section">
+        <GameStats />
+      </div>
+      
+      {/* Click button - en Phaser */}
+      <div className="click-section">
+        <div id="phaser-game" />
+      </div>
+      
+      {/* Upgrades - en React */}
+      <div className="upgrades-section">
+        <UpgradesTable />
+      </div>
     </div>
+  );
+}
+
+export function GameUI() {
+  return (
+    <GameProvider>
+      <GameUIInner />
+    </GameProvider>
   );
 }

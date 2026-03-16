@@ -1,0 +1,118 @@
+/* GameStats - Panel de estadísticas */
+
+.game-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+  border-bottom: 2px solid rgba(78, 205, 196, 0.5);
+  gap: 12px;
+}
+
+/* Coins display */
+.coins-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coin-icon {
+  font-size: 32px;
+  animation: coin-pulse 2s ease-in-out infinite;
+}
+
+@keyframes coin-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.coin-amount {
+  font-size: 42px;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 
+    0 0 10px rgba(255, 215, 0, 0.5),
+    2px 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 2px;
+}
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(26, 26, 46, 0.9);
+  padding: 10px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-icon {
+  font-size: 18px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #8899aa;
+}
+
+/* CPS - cyan */
+.stat-item.cps .stat-value {
+  color: #4ecdc4;
+}
+
+/* CPC - gold */
+.stat-item.cpc .stat-value {
+  color: #ffd700;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(51, 51, 85, 0.8);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .game-stats {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  
+  .coin-icon {
+    font-size: 24px;
+  }
+  
+  .coin-amount {
+    font-size: 32px;
+  }
+  
+  .stats-row {
+    padding: 8px 16px;
+    gap: 12px;
+  }
+  
+  .stat-icon {
+    font-size: 14px;
+  }
+  
+  .stat-value {
+    font-size: 14px;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+  }
+}

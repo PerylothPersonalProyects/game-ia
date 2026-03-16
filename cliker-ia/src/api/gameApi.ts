@@ -8,7 +8,7 @@
  * La app siempre usa esta capa - no necesita saber si está offline o online
  */
 
-import type { GameState, Upgrade } from '../types';
+import type { GameState } from '../types';
 
 // ============================================
 // CONFIG
@@ -172,6 +172,13 @@ const localStorageApi = {
 
 export const gameApi = {
   /**
+   * Cargar estado del juego desde el servidor (sin fallback local)
+   */
+  async loadGame(playerId: string): Promise<GameState> {
+    return restApi.getGameState(playerId);
+  },
+
+  /**
    * Inicializar juego - cargar desde servidor o local
    */
   async initGame(playerId: string): Promise<GameState> {
@@ -192,6 +199,7 @@ export const gameApi = {
         coinsPerClick: 1,
         coinsPerSecond: 0,
         upgrades: [],
+        shopUpgrades: [],
       };
     }
   },

@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { GameState, Upgrade } from '../types';
-import { initialState, clickCoins, passiveIncome, purchaseUpgrade, canAfford } from '../store/gameStore';
+import { initialState, passiveIncome, purchaseUpgrade, canAfford } from '../store/gameStore';
 import { stateToRenderData, type RenderData } from '../game/gameApi';
 import { gameApi } from '../api/gameApi';
 
@@ -37,12 +37,22 @@ export function useGame() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
   
-  const playerIdRef = useRef(getOrCreatePlayerId());
+  // Store playerId in state to avoid ref access during render
+  const [playerId] = useState(() => getOrCreatePlayerId());
+  
+  // Refs (only access in effects/callbacks, never during render)
+  const isOnlineRef = useRef(isOnline);
+  const gameStateRef = useRef(gameState);
   const renderCallbackRef = useRef<((data: RenderData) => void) | null>(null);
   
-  // Usar ref para el estado actual sin causar re-renders
-  const gameStateRef = useRef(gameState);
-  gameStateRef.current = gameState;
+  // Sync refs with state (must be in useEffect, not during render)
+  useEffect(() => {
+    isOnlineRef.current = isOnline;
+  }, [isOnline]);
+  
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
 
   // ============================================
   // INICIALIZACIÓN
@@ -53,7 +63,7 @@ export function useGame() {
     const loadFromServer = async () => {
       try {
         console.log('[useGame] Cargando desde servidor...');
-        const state = await gameApi.initGame(playerIdRef.current);
+        const state = await gameApi.initGame(playerId);
         setGameState(state);
         setIsOnline(true);
         console.log('[useGame] Cargado. Upgrades:', state.upgrades.length);
@@ -77,7 +87,7 @@ export function useGame() {
   
   const saveGame = useCallback(async () => {
     try {
-      await gameApi.saveGame(playerIdRef.current, gameState);
+      await gameApi.saveGame(playerId, gameState);
       localStorage.setItem('idle-clicker-game', JSON.stringify(gameState));
     } catch (e) {
       localStorage.setItem('idle-clicker-game', JSON.stringify(gameState));
@@ -110,63 +120,74 @@ export function useGame() {
   // ============================================
 
   const handleClick = useCallback(async () => {
-    // Usar ref para evitar dependencia en gameState
+    // Always read current values at execution time, not at creation time
+    const currentPlayerId = playerId;
     const currentState = gameStateRef.current;
+    const isCurrentlyOnline = isOnlineRef.current;
     
-    // Actualizar local
-    setGameState(prev => clickCoins(prev));
+    console.log('[handleClick] isOnline:', isCurrentlyOnline);
+    console.log('[handleClick] setGameState called with coins:', currentState.coins + currentState.coinsPerClick);
+    
+    // Actualizar local INMEDIATAMENTE usando valores frescos
+    const newCoins = currentState.coins + currentState.coinsPerClick;
+    
+    console.log('[handleClick] Local - prev:', currentState.coins, '+', currentState.coinsPerClick, '=', newCoins);
+    
+    setGameState(prev => {
+      console.log('[handleClick] setGameState EXECUTED, prev.coins:', prev.coins, '-> new:', newCoins);
+      return {
+        ...prev,
+        coins: newCoins,
+      };
+    });
     
     // Sincronizar con servidor
-    if (isOnline) {
+    if (isCurrentlyOnline) {
       try {
-        const result = await gameApi.processClick(playerIdRef.current);
+        const result = await gameApi.processClick(currentPlayerId);
+        console.log('[handleClick] Server returned - coins:', result.coins);
+        
+        // Usar el valor del servidor (que es la fuente de verdad)
+        // Importante: usar functional update para evitar stale closure
         setGameState(prev => ({
           ...prev,
           coins: result.coins,
-          coinsPerClick: result.coinsPerClick,
+          coinsPerClick: result.coinsPerClick ?? prev.coinsPerClick,
         }));
       } catch (error) {
-        // Ignorar errores de red
+        console.error('[handleClick] Error calling server:', error);
       }
     }
-  }, [isOnline]);
+  }, []);
 
   const handleBuyUpgrade = useCallback(async (upgradeId: string) => {
     const currentState = gameStateRef.current;
+    const isCurrentlyOnline = isOnlineRef.current;
     
-    console.log('[handleBuyUpgrade] Intentando comprar:', upgradeId);
-    console.log('[handleBuyUpgrade] Coins actuales:', currentState.coins);
+    console.log('[handleBuyUpgrade] Intentando comprar:', upgradeId, 'coins:', currentState.coins);
     
     // Verificar si puede comprar
     if (!canAfford(currentState, upgradeId)) {
-      console.log('[handleBuyUpgrade] No puede comprar - coins insuficientes');
+      console.log('[handleBuyUpgrade] No puede comprar');
       return;
     }
-    
-    console.log('[handleBuyUpgrade] Comprando...');
     
     // Actualizar local
     setGameState(prev => {
       const newState = purchaseUpgrade(prev, upgradeId);
-      console.log('[handleBuyUpgrade] Nuevo estado - coins:', newState.coins, 'upgrades:', newState.upgrades.length);
+      console.log('[handleBuyUpgrade] Nuevo estado - coins:', newState.coins, 'shopUpgrades:', newState.shopUpgrades?.map(u => u.id + ':' + u.purchased));
       return newState;
     });
     
     // Sincronizar con servidor
-    if (isOnline) {
+    if (isCurrentlyOnline) {
       try {
-        const result = await gameApi.purchaseUpgrade(playerIdRef.current, upgradeId);
-        console.log('[handleBuyUpgrade] Resultado del servidor:', result);
-        setGameState(prev => ({
-          ...prev,
-          coinsPerClick: result.coinsPerClick,
-          coinsPerSecond: result.coinsPerSecond,
-          upgrades: prev.upgrades.map(u => 
-            u.id === upgradeId 
-              ? { ...u, purchased: result.newLevel, cost: result.newCost }
-              : u
-          ),
-        }));
+        await gameApi.purchaseUpgrade(playerId, upgradeId);
+        
+        // Obtener estado fresco del servidor después de comprar
+        const serverState = await gameApi.loadGame(playerId);
+        console.log('[handleBuyUpgrade] Estado servidor - coins:', serverState.coins, 'shopUpgrades:', serverState.shopUpgrades?.map(u => u.id + ':' + u.purchased));
+        setGameState(serverState);
       } catch (error) {
         console.error('[handleBuyUpgrade] Error:', error);
       }
@@ -174,12 +195,14 @@ export function useGame() {
     
     // Auto-save después de comprar
     setTimeout(saveGame, 100);
-  }, [isOnline, saveGame]);
+  }, [saveGame]);
 
   const handleReset = useCallback(async () => {
     try {
-      await gameApi.deleteGame(playerIdRef.current);
-    } catch (e) {}
+      await gameApi.deleteGame(playerId);
+    } catch {
+      // Silently ignore delete errors
+    }
     setGameState(initialState);
     localStorage.removeItem('idle-clicker-game');
   }, []);
@@ -205,7 +228,7 @@ export function useGame() {
     gameState,
     isLoaded,
     isOnline,
-    playerId: playerIdRef.current,
+    playerId: playerId,
     
     // Acciones
     handleClick,

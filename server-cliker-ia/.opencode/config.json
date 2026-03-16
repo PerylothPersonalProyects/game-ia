@@ -1,0 +1,8 @@
+{
+  "project": "server-cliker-ia",
+  "description": "Backend del juego clicker idle",
+  "agents": [
+    "backend",
+    "architect"
+  ]
+}

@@ -33,6 +33,7 @@ export interface IPlayer extends Document {
   coinsPerClick: number;
   coinsPerSecond: number;
   upgrades: IUpgrade[];
+  shopUpgrades?: IUpgrade[]; // Upgrades disponibles en el shop
   lastUpdate: number;
   createdAt: Date;
   updatedAt: Date;
@@ -76,6 +77,7 @@ const PlayerSchema = new Schema<IPlayer>({
   coinsPerClick: { type: Number, default: 1 },
   coinsPerSecond: { type: Number, default: 0 },
   upgrades: [UpgradeSchema],
+  shopUpgrades: [UpgradeSchema], // Shop de upgrades aleatorios
   lastUpdate: { type: Number, default: Date.now },
 }, {
   timestamps: true,

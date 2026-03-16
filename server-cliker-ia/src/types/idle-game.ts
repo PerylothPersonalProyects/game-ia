@@ -21,6 +21,7 @@ export interface GameState {
   coinsPerClick: number;
   coinsPerSecond: number;
   upgrades: Upgrade[];
+  shopUpgrades?: Upgrade[]; // Upgrades disponibles en el shop (máx 4)
 }
 
 // Estado interno del servidor (más detallado)

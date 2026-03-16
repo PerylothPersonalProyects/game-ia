@@ -7,13 +7,15 @@ export interface Upgrade {
   effect: number;
   maxLevel: number;
   purchased: number;
+  type: 'click' | 'passive';
 }
 
 export interface GameState {
   coins: number;
   coinsPerClick: number;
   coinsPerSecond: number;
-  upgrades: Upgrade[];
+  upgrades: Upgrade[];       // Upgrades comprados por el jugador
+  shopUpgrades?: Upgrade[];  // Upgrades disponibles en el shop (máx 4)
 }
 
 export interface UpgradeEffect {

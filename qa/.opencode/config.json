@@ -1,0 +1,7 @@
+{
+  "project": "qa",
+  "description": "Tests de Playwright para el juego",
+  "agents": [
+    "qa"
+  ]
+}
