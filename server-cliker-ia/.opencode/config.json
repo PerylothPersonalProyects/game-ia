@@ -1,6 +1,14 @@
 {
   "project": "server-cliker-ia",
   "description": "Backend del juego clicker idle",
+
+  "provider": "openai",
+
+  "openai": {
+    "baseUrl": "http://localhost:11434/v1",
+    "apiKey": "ollama"
+  },
+
   "agents": [
     "backend",
     "architect"

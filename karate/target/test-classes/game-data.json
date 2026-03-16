@@ -1,0 +1,110 @@
+{
+  "users": [
+    {
+      "userId": "test-user-1",
+      "username": "testuser1",
+      "initialState": {
+        "coins": 0,
+        "coinsPerClick": 1,
+        "coinsPerSecond": 0,
+        "upgrades": []
+      }
+    },
+    {
+      "userId": "test-user-2",
+      "username": "testuser2",
+      "initialState": {
+        "coins": 100,
+        "coinsPerClick": 1,
+        "coinsPerSecond": 0,
+        "upgrades": []
+      }
+    },
+    {
+      "userId": "test-user-3",
+      "username": "testuser3",
+      "initialState": {
+        "coins": 1000,
+        "coinsPerClick": 5,
+        "coinsPerSecond": 10,
+        "upgrades": [
+          { "id": "cursor", "purchased": 10 },
+          { "id": "grandma", "purchased": 5 }
+        ]
+      }
+    }
+  ],
+  "upgrades": [
+    {
+      "id": "cursor",
+      "name": "Cursor",
+      "baseCost": 15,
+      "costMultiplier": 1.15,
+      "effect": {
+        "type": "coinsPerClick",
+        "value": 1
+      }
+    },
+    {
+      "id": "grandma",
+      "name": "Grandma",
+      "baseCost": 100,
+      "costMultiplier": 1.15,
+      "effect": {
+        "type": "coinsPerSecond",
+        "value": 1
+      }
+    },
+    {
+      "id": "farm",
+      "name": "Farm",
+      "baseCost": 1100,
+      "costMultiplier": 1.15,
+      "effect": {
+        "type": "coinsPerSecond",
+        "value": 8
+      }
+    },
+    {
+      "id": "mine",
+      "name": "Mine",
+      "baseCost": 12000,
+      "costMultiplier": 1.15,
+      "effect": {
+        "type": "coinsPerSecond",
+        "value": 47
+      }
+    }
+  ],
+  "testCases": {
+    "click": [
+      {
+        "name": "Click with 0 coins",
+        "request": { "currentCoins": 0, "coinsPerClick": 1 },
+        "expectedResponse": { "success": true, "newCoins": 1 }
+      },
+      {
+        "name": "Click with 10 coins",
+        "request": { "currentCoins": 10, "coinsPerClick": 1 },
+        "expectedResponse": { "success": true, "newCoins": 11 }
+      },
+      {
+        "name": "Click with 5 coinsPerClick",
+        "request": { "currentCoins": 100, "coinsPerClick": 5 },
+        "expectedResponse": { "success": true, "newCoins": 105 }
+      }
+    ],
+    "upgrade": [
+      {
+        "name": "Upgrade with sufficient coins",
+        "request": { "currentCoins": 100, "upgradeId": "cursor" },
+        "expectedResponse": { "success": true }
+      },
+      {
+        "name": "Upgrade with insufficient coins",
+        "request": { "currentCoins": 5, "upgradeId": "grandma" },
+        "expectedResponse": { "success": false, "error": "INSUFFICIENT_COINS" }
+      }
+    ]
+  }
+}

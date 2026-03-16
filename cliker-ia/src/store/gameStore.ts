@@ -1,4 +1,8 @@
 import type { GameState, Upgrade } from '../types';
+import { GameEngine } from '../domain/services/GameEngine';
+
+// Re-export del dominio para uso externo
+export { GameEngine, resolveUpgradeId, isClickUpgrade, isPassiveUpgrade } from '../domain/services/GameEngine';
 
 // ============================================
 // UPGRADES - Coinciden con el backend
@@ -85,21 +89,15 @@ export const initialState: GameState = {
 };
 
 // ============================================
-// HELPERS
+// HELPERS - Delegados al dominio
 // ============================================
 
 export function clickCoins(state: GameState): GameState {
-  return {
-    ...state,
-    coins: state.coins + state.coinsPerClick,
-  };
+  return GameEngine.click(state);
 }
 
 export function passiveIncome(state: GameState): GameState {
-  return {
-    ...state,
-    coins: state.coins + state.coinsPerSecond,
-  };
+  return GameEngine.passiveIncome(state);
 }
 
 export function calculateCost(upgrade: Upgrade): number {
@@ -107,93 +105,9 @@ export function calculateCost(upgrade: Upgrade): number {
 }
 
 export function purchaseUpgrade(state: GameState, upgradeId: string): GameState {
-  // Buscar en upgrades primero (para compatibilidad hacia atrás)
-  let upgradeIndex = state.upgrades.findIndex((u) => u.id === upgradeId);
-  let upgrade = upgradeIndex !== -1 ? state.upgrades[upgradeIndex] : null;
-  
-  // Si no está en upgrades, buscar en shopUpgrades
-  if (!upgrade && state.shopUpgrades) {
-    const shopIndex = state.shopUpgrades.findIndex((u) => u.id === upgradeId);
-    if (shopIndex !== -1) {
-      upgrade = state.shopUpgrades[shopIndex];
-      upgradeIndex = shopIndex;
-    }
-  }
-  
-  if (!upgrade) {
-    console.log('[purchaseUpgrade] Upgrade no encontrado:', upgradeId);
-    return state;
-  }
-
-  // Usar el costo directamente del upgrade (el servidor lo calcula)
-  const cost = upgrade.cost;
-
-  console.log('[purchaseUpgrade] Comprando', upgradeId, '- costo:', cost, 'coins:', state.coins);
-
-  if (state.coins < cost || upgrade.purchased >= upgrade.maxLevel) {
-    console.log('[purchaseUpgrade] No se puede comprar');
-    return state;
-  }
-
-  // Determinar si es click o passive según el ID
-  const isClickUpgrade = upgradeId.startsWith('click_');
-  const isPassiveUpgrade = upgradeId.startsWith('passive_');
-  
-  const newCoinsPerClick = isClickUpgrade
-    ? state.coinsPerClick + upgrade.effect
-    : state.coinsPerClick;
-    
-  const newCoinsPerSecond = isPassiveUpgrade
-    ? state.coinsPerSecond + upgrade.effect
-    : state.coinsPerSecond;
-
-  // Calcular nuevo costo para la siguiente compra
-  const newCost = Math.floor(upgrade.cost * upgrade.costMultiplier);
-
-  // Actualizar el upgrade (ya sea en upgrades o shopUpgrades)
-  const newUpgrades = [...state.upgrades];
-  const newShopUpgrades = state.shopUpgrades ? [...state.shopUpgrades] : undefined;
-  
-  // Actualizar en la lista correspondiente
-  if (upgradeIndex !== -1 && newUpgrades[upgradeIndex]) {
-    newUpgrades[upgradeIndex] = {
-      ...upgrade,
-      purchased: upgrade.purchased + 1,
-      cost: newCost,
-    };
-  } else if (newShopUpgrades) {
-    const shopIdx = newShopUpgrades.findIndex((u) => u.id === upgradeId);
-    if (shopIdx !== -1) {
-      newShopUpgrades[shopIdx] = {
-        ...upgrade,
-        purchased: upgrade.purchased + 1,
-        cost: newCost,
-      };
-    }
-  }
-
-  console.log('[purchaseUpgrade] Nueva compra - level:', upgrade.purchased + 1, 'nuevo costo:', newCost);
-
-  return {
-    ...state,
-    coins: state.coins - cost,
-    coinsPerClick: newCoinsPerClick,
-    coinsPerSecond: newCoinsPerSecond,
-    upgrades: newUpgrades,
-    shopUpgrades: newShopUpgrades,
-  };
+  return GameEngine.purchase(state, upgradeId);
 }
 
 export function canAfford(state: GameState, upgradeId: string): boolean {
-  // Buscar en upgrades primero
-  let upgrade = state.upgrades.find((u) => u.id === upgradeId);
-  
-  // Si no está en upgrades, buscar en shopUpgrades
-  if (!upgrade && state.shopUpgrades) {
-    upgrade = state.shopUpgrades.find((u) => u.id === upgradeId);
-  }
-  
-  if (!upgrade) return false;
-  const cost = calculateCost(upgrade);
-  return state.coins >= cost && upgrade.purchased < upgrade.maxLevel;
+  return GameEngine.canAfford(state, upgradeId);
 }

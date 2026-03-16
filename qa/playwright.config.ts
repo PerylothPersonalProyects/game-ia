@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Configuración expandida de Playwright para QA del Idle Clicker Game
+ * Incluye múltiples proyectos, fixtures personalizadas, y configuraciones de video/screenshot
+ */
 export default defineConfig({
   // Directorio donde están los tests
   testDir: './tests',
@@ -7,8 +11,8 @@ export default defineConfig({
   // Filtrar archivos de test
   testMatch: '**/*.spec.ts',
   
-  // Timeout global
-  timeout: 30 * 1000,
+  // Timeout global para tests (en ms)
+  timeout: 30000,
   
   // Expect timeout
   expect: {
@@ -27,16 +31,22 @@ export default defineConfig({
   // Workers (procesos paralelos)
   workers: process.env.CI ? 1 : undefined,
   
-  // Reporter
+  // Reporter - HTML y list para CI
   reporter: [
-    ['html', { open: 'never' }],
-    ['list']
+    ['html', { 
+      open: 'never',
+      outputFolder: 'playwright-report' 
+    }],
+    ['list'],
+    ['json', { outputFile: 'playwright-report/results.json' }]
   ],
 
   // Configuración de screenshot y video
   use: {
-    // URL base - cambiar según el entorno
-    baseURL: 'http://localhost:3000',
+  // URL base - cambiar según el entorno
+  // IMPORTANTE: Asegúrate de que el servidor del juego esté corriendo
+  // Para iniciar el juego: cd ../cliker-ia && npm run dev
+  baseURL: process.env.BASE_URL || 'http://localhost:5173',
     
     // Capturar screenshots solo en fallos
     screenshot: 'only-on-failure',
@@ -49,29 +59,31 @@ export default defineConfig({
     
     // Trace en retry
     trace: 'on-first-retry',
+    
+    // Aceptar downloads
+    acceptDownloads: true,
+    
+    // Locale
+    locale: 'es-ES',
+    
+    // Timezone
+    timezoneId: 'America/Mexico_City',
   },
 
   // Configuración de proyectos (navegadores)
+  // Ejecutar solo chromium para evitar problemas de permisos en otros navegadores
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-dev-shm-usage']
+        }
+      },
     },
   ],
 
-  // Servidor web para desarrollo
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // Output directory for test results
+  outputDir: 'playwright-results',
 });
