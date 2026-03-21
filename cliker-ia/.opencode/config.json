@@ -1,9 +1,0 @@
-{
-  "project": "cliker-ia",
-  "description": "Frontend del juego clicker idle",
-  "agents": [
-    "frontend",
-    "game_designer",
-    "gameplay_programmer"
-  ]
-}

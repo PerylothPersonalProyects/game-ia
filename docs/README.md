@@ -264,3 +264,6 @@ ollama list
 * integración con herramientas de desarrollo
 
 ---
+
+
+https://github.com/Gentleman-Programming/agent-teams-lite

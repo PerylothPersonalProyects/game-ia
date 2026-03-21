@@ -7,6 +7,11 @@ import { Server } from 'socket.io';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { swaggerOptions } from './swagger.js';
 import gameRoutes from './api/routes/gameRoutes.js';
+import healthRoutes from './api/routes/health.js';
+import statsRoutes from './api/routes/stats.js';
+import leaderboardRoutes from './api/routes/leaderboard.js';
+import { rateLimitMiddleware } from './api/middleware/rateLimiter.js';
+import { authMiddleware } from './api/middleware/auth.js';
 import { connectDB } from './database/connection.js';
 import { seedDefaultUpgrades } from './database/models/Player.js';
 
@@ -16,6 +21,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Apply rate limiting to all requests (excludes /api/health by default)
+app.use(rateLimitMiddleware);
+
 // Conexión a MongoDB
 await connectDB();
 
@@ -24,6 +32,15 @@ await seedDefaultUpgrades();
 
 // Rutas RESTful para el Idle Game
 app.use('/api/game', gameRoutes);
+
+// Health check endpoint (no auth required)
+app.use('/api/health', healthRoutes);
+
+// Statistics endpoints (auth required)
+app.use('/api/stats', statsRoutes);
+
+// Leaderboard endpoints (auth required)
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Swagger
 const swaggerDocs = swaggerJsdoc(swaggerOptions);

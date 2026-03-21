@@ -296,7 +296,12 @@ export class IdleGameService {
     const newCost = Math.floor(config.baseCost * newCostMultiplier);
     
     // Construir la actualización atómica
-    const updateObj: Record<string, unknown> = {
+    interface UpdateObject {
+      $inc: Record<string, number>;
+      $set: Record<string, unknown>;
+    }
+    
+    const updateObj: UpdateObject = {
       $inc: { coins: -upgrade.cost },
       $set: { 
         lastUpdate: Date.now(),

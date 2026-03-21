@@ -1,0 +1,34 @@
+{
+  "models": [
+    {
+      "title": "llama3",
+      "provider": "ollama",
+      "model": "llama3"
+    },
+    {
+      "title": "Architect",
+      "provider": "ollama",
+      "model": "llama3"
+    },
+    {
+      "title": "Coder",
+      "provider": "ollama",
+      "model": "deepseek-coder:6.7b"
+    },
+    {
+      "title": "Fast",
+      "provider": "ollama",
+      "model": "mistral"
+    },
+    {
+      "title": "Embedder",
+      "provider": "nomic",
+      "model": "nomic-embed-text:latest"
+    },
+    {
+      "title": "Autodetect",
+      "provider": "ollama",
+      "model": "AUTODETECT"
+    }
+  ]
+}
