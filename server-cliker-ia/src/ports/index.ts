@@ -32,6 +32,11 @@ export interface PlayerRepository {
    * Eliminar un jugador
    */
   delete(playerId: string): Promise<boolean>;
+  
+  /**
+   * Actualizar timestamp lastUpdate (para tests de ingresos pasivos)
+   */
+  updateLastUpdate?(playerId: string, lastUpdate: number): Promise<Player | null>;
 }
 
 /**

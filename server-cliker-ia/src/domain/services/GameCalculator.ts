@@ -135,15 +135,24 @@ export class GameCalculator {
 
   /**
    * Procesar un click - retorna el resultado
+   * FIX: Ahora incluye ingresos pasivos acumulados desde el último click/acción
    */
   static processClick(player: Player): ClickResult {
-    const earned = player.coinsPerClick;
+    const now = Date.now();
+    
+    // Calcular ingresos pasivos acumulados desde la última acción
+    const secondsSinceLastAction = Math.max(0, Math.floor((now - player.lastUpdate) / 1000));
+    const passiveEarned = player.coinsPerSecond * secondsSinceLastAction;
+    const clickEarned = player.coinsPerClick;
+    const earned = clickEarned + passiveEarned;
     const newCoins = player.coins + earned;
     
     return {
       earned,
       newCoins,
       coinsPerClick: player.coinsPerClick,
+      passiveEarned,
+      clickEarned,
     };
   }
 

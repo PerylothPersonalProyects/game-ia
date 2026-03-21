@@ -73,11 +73,14 @@ export interface SyncData {
 
 /**
  * Resultado de un click
+ * FIX: Ahora incluye breakdown de earnings (pasivo + click)
  */
 export interface ClickResult {
-  earned: number;
-  newCoins: number;
-  coinsPerClick: number;
+  earned: number;        // Total ganado (passiveEarned + clickEarned)
+  newCoins: number;      // Coins totales después del click
+  coinsPerClick: number; // Power de click
+  passiveEarned: number; // Ingresos pasivos desde el último click
+  clickEarned: number;    // Ganancias del click en sí
 }
 
 /**

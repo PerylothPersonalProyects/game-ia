@@ -192,21 +192,35 @@ export class IdleGameService {
   }
 
   // Procesar click - USAR operación atómica para evitar race conditions
-  async processClick(playerId: string): Promise<{ player: IPlayer; earned: number }> {
+  // FIX: Ahora incluye ingresos pasivos acumulados desde el último click/acción
+  async processClick(playerId: string): Promise<{ player: IPlayer; earned: number; passiveEarned: number; clickEarned: number }> {
     console.log('[processClick] === INICIO ===');
     console.log('[processClick] playerId:', playerId);
     
     // Primero obtener el valor actual para saber cuánto ganó
     const player = await this.getOrCreatePlayer(playerId);
-    const earned = player.coinsPerClick;
-    console.log('[processClick] player.coins LEIDO de DB:', player.coins, 'coinsPerClick:', player.coinsPerClick, 'earned:', earned);
+    const now = Date.now();
+    
+    // Calcular ingresos pasivos acumulados desde la última acción
+    const secondsSinceLastAction = Math.max(0, Math.floor((now - player.lastUpdate) / 1000));
+    const passiveEarned = player.coinsPerSecond * secondsSinceLastAction;
+    const clickEarned = player.coinsPerClick;
+    const earned = clickEarned + passiveEarned;
+    
+    console.log('[processClick] player.coins LEIDO de DB:', player.coins, 
+      'coinsPerClick:', player.coinsPerClick, 
+      'coinsPerSecond:', player.coinsPerSecond,
+      'secondsSinceLastAction:', secondsSinceLastAction,
+      'passiveEarned:', passiveEarned,
+      'clickEarned:', clickEarned,
+      'total earned:', earned);
     
     // Usar operación atómica $inc para evitar race conditions
     const updatedPlayer = await PlayerModel.findOneAndUpdate(
       { playerId },
       { 
         $inc: { coins: earned },
-        $set: { lastUpdate: Date.now() }
+        $set: { lastUpdate: now }
       },
       { new: true }
     );
@@ -217,7 +231,7 @@ export class IdleGameService {
     
     console.log('[processClick] player.coins DESPUES de $inc:', updatedPlayer.coins);
     
-    return { player: updatedPlayer, earned };
+    return { player: updatedPlayer, earned, passiveEarned, clickEarned };
   }
 
   // Calcular ingresos pasivos basados en tiempo - USAR operación atómica
@@ -377,9 +391,16 @@ export class IdleGameService {
     
     console.log('[saveGame] player.upgrades BEFORE: ' + JSON.stringify(player.upgrades.map(u => ({ id: u.id, purchased: u.purchased }))));
     
-    // Solo aceptamos los coins del cliente, NO coinsPerClick ni coinsPerSecond
-    // Estos se calculan desde los upgrades comprados
-    player.coins = state.coins;
+    // SECURE: Calculate coins server-side from DB + offline progress
+    // DO NOT trust client-provided coins (anti-cheat)
+    const offlineProgress = await this.calculateOfflineProgress(playerId);
+    console.log('[saveGame] Server calculated offline progress:', offlineProgress);
+    // Keep current server coins (with offline earnings added)
+    // NEVER trust state.coins from client
+    
+    // Only accept non-monetary state from client (upgrades, settings, etc.)
+    // Do NOT accept: coins, coinsPerClick, coinsPerSecond from client
+    // coinsPerClick and coinsPerSecond are already recalculated below
     
     // Actualizar upgrades - NO aceptamos purchased del cliente
     // Mantenemos los valores de purchased que ya tenemos en la DB

@@ -28,6 +28,7 @@ export class InMemoryPlayerRepository implements PlayerRepository {
     const updated = {
       ...player,
       coins: player.coins + coinsDelta,
+      lastUpdate: Date.now(), // Actualizar timestamp para calcular next passive earnings
     };
     this.players.set(playerId, updated);
     return { ...updated };
@@ -53,6 +54,19 @@ export class InMemoryPlayerRepository implements PlayerRepository {
 
   getAll(): Player[] {
     return Array.from(this.players.values());
+  }
+
+  // Helper para actualizar lastUpdate (necesario para tests de ingresos pasivos)
+  async updateLastUpdate(playerId: string, lastUpdate: number): Promise<Player | null> {
+    const player = this.players.get(playerId);
+    if (!player) return null;
+    
+    const updated = {
+      ...player,
+      lastUpdate,
+    };
+    this.players.set(playerId, updated);
+    return { ...updated };
   }
 }
 

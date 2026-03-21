@@ -131,6 +131,8 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+  // Optional coins field for efficient state sync (avoids extra fetch)
+  coins?: number;
 }
 
 export interface SyncResponse {
@@ -145,6 +147,9 @@ export interface ClickResponse {
   clickPower: number;
   coinsPerClick: number;
   totalClicks: number;
+  // NEW: Breakdown of earnings (bug fix)
+  passiveEarned?: number; // Coins earned from passive income since last action
+  clickEarned?: number;   // Coins earned from the click itself
 }
 
 export interface PurchaseResponse {
@@ -161,6 +166,7 @@ export interface UpgradeResponse {
   newCost: number;
   coinsPerClick: number;
   coinsPerSecond: number;
+  // coins is returned at the ApiResponse level for efficient sync
 }
 
 export interface SaveResponse {

@@ -21,17 +21,19 @@ export class ProcessClickUseCase {
       throw new Error(`Player not found: ${playerId}`);
     }
 
-    // 2. Calcular resultado del click
+    // 2. Calcular resultado del click (incluye passive + click earnings)
     const result = GameCalculator.processClick(player);
 
     // 3. Actualizar coins en la base de datos
-    await this.playerRepo.updateCoins(playerId, result.earned);
+    const updatedPlayer = await this.playerRepo.updateCoins(playerId, result.earned);
 
-    // 4. Retornar resultado
+    // 4. Retornar resultado con breakdown completo
     return {
       earned: result.earned,
-      newCoins: player.coins + result.earned,
+      newCoins: updatedPlayer!.coins,
       coinsPerClick: result.coinsPerClick,
+      passiveEarned: result.passiveEarned,
+      clickEarned: result.clickEarned,
     };
   }
 }
