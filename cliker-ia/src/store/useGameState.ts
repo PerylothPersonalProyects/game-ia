@@ -172,26 +172,63 @@ export function useGame() {
       return;
     }
     
-    // Actualizar local
-    setGameState(prev => {
-      const newState = purchaseUpgrade(prev, upgradeId);
-      console.log('[handleBuyUpgrade] Nuevo estado - coins:', newState.coins, 'shopUpgrades:', newState.shopUpgrades?.map(u => u.id + ':' + u.purchased));
-      return newState;
-    });
-    
     // Sincronizar con servidor
     if (isCurrentlyOnline) {
       try {
-        await gameApi.purchaseUpgrade(playerId, upgradeId);
+        // Usar coins del servidor para evitar inconsistencias (evita double-spend)
+        const result = await gameApi.purchaseUpgrade(playerId, upgradeId);
+        console.log('[handleBuyUpgrade] Server returned coins:', result.coins);
         
-        // Obtener estado fresco del servidor después de comprar
-        const serverState = await gameApi.loadGame(playerId);
-        console.log('[handleBuyUpgrade] Estado servidor - coins:', serverState.coins, 'shopUpgrades:', serverState.shopUpgrades?.map(u => u.id + ':' + u.purchased));
-        setGameState(serverState);
+        // Actualizar estado con coins del servidor (fuente de verdad)
+        setGameState(prev => {
+          // Find and update the purchased upgrade in state
+          const updatedUpgrades = prev.upgrades.map(u => {
+            if (u.id === upgradeId) {
+              return {
+                ...u,
+                purchased: result.data.newLevel,
+                cost: result.data.newCost,
+              };
+            }
+            return u;
+          });
+          
+          // Also update shopUpgrades if applicable
+          const updatedShopUpgrades = prev.shopUpgrades?.map(u => {
+            if (u.id === upgradeId) {
+              return {
+                ...u,
+                purchased: result.data.newLevel,
+                cost: result.data.newCost,
+              };
+            }
+            return u;
+          });
+          
+          return {
+            ...prev,
+            coins: result.coins, // Use server coins - this is the source of truth
+            coinsPerClick: result.data.coinsPerClick,
+            coinsPerSecond: result.data.coinsPerSecond,
+            upgrades: updatedUpgrades,
+            shopUpgrades: updatedShopUpgrades,
+          };
+        });
+        
+        console.log('[handleBuyUpgrade] Estado actualizado con coins del servidor');
+        return; // Early return - no need for local update + refetch
       } catch (error) {
         console.error('[handleBuyUpgrade] Error:', error);
+        // Fall through to local update if server fails
       }
     }
+    
+    // Fallback: Actualizar local si no hay conexión o si falló el servidor
+    setGameState(prev => {
+      const newState = purchaseUpgrade(prev, upgradeId);
+      console.log('[handleBuyUpgrade] Nuevo estado (local) - coins:', newState.coins);
+      return newState;
+    });
     
     // Auto-save después de comprar
     setTimeout(saveGame, 100);

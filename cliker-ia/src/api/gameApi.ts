@@ -24,6 +24,8 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+  // Optional coins field for efficient state sync
+  coins?: number;
 }
 
 export interface SyncResponse {
@@ -46,6 +48,13 @@ export interface UpgradeResponse {
   newCost: number;
   coinsPerClick: number;
   coinsPerSecond: number;
+}
+
+// Extended response that includes coins for efficient sync
+export interface UpgradePurchaseResponse {
+  success: boolean;
+  coins: number; // Current coins from server (source of truth)
+  data: UpgradeResponse;
 }
 
 // ============================================
@@ -103,8 +112,8 @@ const restApi = {
     return response.data;
   },
 
-  // Comprar upgrade
-  async buyUpgrade(playerId: string, upgradeId: string): Promise<UpgradeResponse> {
+  // Comprar upgrade - returns coins for efficient sync (avoids extra fetch)
+  async buyUpgrade(playerId: string, upgradeId: string): Promise<UpgradePurchaseResponse> {
     const response = await fetchApi<ApiResponse<UpgradeResponse>>(`/api/game/${playerId}/upgrade`, {
       method: 'POST',
       body: JSON.stringify({ upgradeId }),
@@ -112,7 +121,16 @@ const restApi = {
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to buy upgrade');
     }
-    return response.data;
+    // Return coins at top level for efficient state sync
+    // Note: coins is the current player's total from server (source of truth)
+    if (response.coins === undefined) {
+      throw new Error('Server did not return coins - upgrade may have failed');
+    }
+    return {
+      success: true,
+      coins: response.coins,
+      data: response.data,
+    };
   },
 
   // Guardar estado
@@ -213,8 +231,9 @@ export const gameApi = {
 
   /**
    * Comprar upgrade (servidor)
+   * Returns coins for efficient sync - use this instead of full state refetch
    */
-  async purchaseUpgrade(playerId: string, upgradeId: string): Promise<UpgradeResponse> {
+  async purchaseUpgrade(playerId: string, upgradeId: string): Promise<UpgradePurchaseResponse> {
     return restApi.buyUpgrade(playerId, upgradeId);
   },
 

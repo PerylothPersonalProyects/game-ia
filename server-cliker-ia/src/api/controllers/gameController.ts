@@ -212,8 +212,10 @@ export async function buyUpgrade(req: Request, res: Response) {
       coinsPerSecond: result.player!.coinsPerSecond,
     };
 
-    const response: ApiResponse<UpgradeResponse> = {
+    // Add coins at top level for efficient sync (avoids extra fetch)
+    const response: ApiResponse<UpgradeResponse> & { coins?: number } = {
       success: true,
+      coins: result.player!.coins, // Current coins from DB - source of truth
       data: upgradeResponse,
     };
 
