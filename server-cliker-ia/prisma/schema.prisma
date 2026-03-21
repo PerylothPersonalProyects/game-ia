@@ -1,0 +1,52 @@
+// Prisma Schema for Clicker Game
+// MySQL Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ============================================
+// PLAYER MODEL
+// ============================================
+
+model Player {
+  id             String   @id @default(uuid())
+  playerId       String   @unique @map("player_id")
+  coins          Int      @default(0)
+  coinsPerClick  Int      @default(1) @map("coins_per_click")
+  coinsPerSecond Float    @default(0) @map("coins_per_second")
+  upgrades       Json     @default("[]")
+  shopUpgrades   Json     @default("[]") @map("shop_upgrades")
+  lastUpdate     BigInt   @map("last_update")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("players")
+}
+
+// ============================================
+// UPGRADE CONFIG MODEL
+// ============================================
+
+model UpgradeConfig {
+  id              String   @id
+  name            String
+  description     String?  @db.Text
+  baseCost        Int      @map("base_cost")
+  costMultiplier  Float    @default(1.15) @map("cost_multiplier")
+  effect          Float
+  maxLevel        Int      @default(999) @map("max_level")
+  type            String
+  tier            Int      @default(1)
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("upgrade_configs")
+}

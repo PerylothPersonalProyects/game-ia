@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
-import mongoose from 'mongoose';
-import { isConnectedToDB } from '../../database/connection.js';
+import { prisma } from '../../database/prisma.js';
 
 const router = Router();
 
@@ -14,8 +13,7 @@ export interface HealthResponse {
   version: string;
   database: {
     connected: boolean;
-    host?: string;
-    name?: string;
+    type: string;
   };
 }
 
@@ -56,13 +54,17 @@ export interface HealthResponse {
  *                   type: string
  *                   example: error
  */
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   const startTime = Date.now();
   
-  const dbConnected = isConnectedToDB();
-  const dbState = mongoose.connection.readyState;
-  
-  // mongoose.readyState: 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  let dbConnected = false;
+  try {
+    // Try to run a simple query to check connection
+    await prisma.$queryRaw`SELECT 1`;
+    dbConnected = true;
+  } catch (error) {
+    dbConnected = false;
+  }
   
   const response: HealthResponse = {
     status: dbConnected ? 'ok' : 'error',
@@ -71,14 +73,9 @@ router.get('/', (req: Request, res: Response) => {
     version: VERSION,
     database: {
       connected: dbConnected,
+      type: 'mysql',
     },
   };
-
-  // Add database info if connected
-  if (dbConnected && mongoose.connection.db) {
-    response.database.host = mongoose.connection.host;
-    response.database.name = mongoose.connection.db.databaseName;
-  }
 
   // Response time should be < 100ms
   const responseTime = Date.now() - startTime;

@@ -1,4 +1,4 @@
-import { PlayerModel, UpgradeConfigModel, IPlayer, IUpgrade, IUpgradeConfig } from '../database/models/Player.js';
+import { prisma } from '../database/prisma.js';
 import type { 
   GameState, 
   Upgrade, 
@@ -8,24 +8,61 @@ import type {
   UpgradeResponse
 } from '../types/idle-game.js';
 
+// Type for Prisma Player record
+type PrismaPlayer = Awaited<ReturnType<typeof prisma.player.findUnique>>;
+
+// Type for player upgrades array item
+interface PlayerUpgrade {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  costMultiplier: number;
+  effect: number;
+  maxLevel: number;
+  purchased: number;
+}
+
+// Convert Prisma player to IPlayer-like object
+function toPlayerData(prismaPlayer: NonNullable<PrismaPlayer>) {
+  const upgrades = typeof prismaPlayer.upgrades === 'string' 
+    ? JSON.parse(prismaPlayer.upgrades) 
+    : prismaPlayer.upgrades;
+  const shopUpgrades = typeof prismaPlayer.shopUpgrades === 'string' 
+    ? JSON.parse(prismaPlayer.shopUpgrades) 
+    : prismaPlayer.shopUpgrades;
+  
+  return {
+    playerId: prismaPlayer.playerId,
+    coins: prismaPlayer.coins,
+    coinsPerClick: prismaPlayer.coinsPerClick,
+    coinsPerSecond: prismaPlayer.coinsPerSecond,
+    upgrades: upgrades as PlayerUpgrade[],
+    shopUpgrades: shopUpgrades as PlayerUpgrade[],
+    lastUpdate: Number(prismaPlayer.lastUpdate),
+  };
+}
+
 export class IdleGameService {
   // Obtener configuraciones de mejoras desde la DB
   async getUpgradeConfigs(): Promise<UpgradeConfig[]> {
-    const configs = await UpgradeConfigModel.find({ enabled: true }).lean();
+    const configs = await prisma.upgradeConfig.findMany({ 
+      where: { enabled: true } 
+    });
     return configs.map(c => ({
       id: c.id,
       name: c.name,
-      description: c.description,
+      description: c.description || '',
       baseCost: c.baseCost,
       costMultiplier: c.costMultiplier,
       effect: c.effect,
       maxLevel: c.maxLevel,
-      type: c.type,
+      type: c.type as 'click' | 'passive',
     }));
   }
 
   // Inicializar upgrades para un jugador basados en la config de la DB
-  private async getDefaultUpgrades(): Promise<IUpgrade[]> {
+  private async getDefaultUpgrades(): Promise<PlayerUpgrade[]> {
     const configs = await this.getUpgradeConfigs();
     
     return configs.map(config => ({
@@ -40,10 +77,10 @@ export class IdleGameService {
     }));
   }
 
-  // Obtener o crear jugador desde MongoDB
-  async getOrCreatePlayer(playerId: string): Promise<IPlayer> {
+  // Obtener o crear jugador desde MySQL (Prisma)
+  async getOrCreatePlayer(playerId: string): Promise<ReturnType<typeof toPlayerData>> {
     console.log('[getOrCreatePlayer] Buscando jugador:', playerId);
-    let player = await PlayerModel.findOne({ playerId });
+    let player = await prisma.player.findUnique({ where: { playerId } });
     console.log('[getOrCreatePlayer] Encontrado:', player ? 'SI' : 'NO', player ? `coins: ${player.coins}, coinsPerClick: ${player.coinsPerClick}` : 'N/A');
     
     if (!player) {
@@ -51,32 +88,38 @@ export class IdleGameService {
       // GARANTIZAR al menos 1 Tier 1 upgrade
       const shopUpgrades = await this.getRandomUpgradesWithTier1Guaranteed(4);
       
-      player = await PlayerModel.create({
-        playerId,
-        coins: 0,
-        coinsPerClick: 1,
-        coinsPerSecond: 0,
-        upgrades: [], // Sin upgrades comprados al inicio
-        shopUpgrades: shopUpgrades.map(u => ({
-          id: u.id,
-          name: u.name,
-          description: u.description,
-          cost: u.baseCost,
-          costMultiplier: 1,
-          effect: u.effect,
-          maxLevel: u.maxLevel,
-          purchased: 0,
-        })),
-        lastUpdate: Date.now(),
+      const newPlayer = await prisma.player.create({
+        data: {
+          playerId,
+          coins: 0,
+          coinsPerClick: 1,
+          coinsPerSecond: 0,
+          upgrades: [],
+          shopUpgrades: shopUpgrades.map(u => ({
+            id: u.id,
+            name: u.name,
+            description: u.description,
+            cost: u.baseCost,
+            costMultiplier: 1,
+            effect: u.effect,
+            maxLevel: u.maxLevel,
+            purchased: 0,
+          })),
+          lastUpdate: BigInt(Date.now()),
+        },
       });
+      
+      return toPlayerData(newPlayer);
     } else {
+      const playerData = toPlayerData(player);
+      
       // Verificar si el jugador tiene shopUpgrades (jugadores antiguos)
-      if (!player.shopUpgrades || player.shopUpgrades.length === 0) {
+      if (!playerData.shopUpgrades || playerData.shopUpgrades.length === 0) {
         // Regenerar shop si no tiene
-        const purchasedIds = player.upgrades.map(u => u.id);
+        const purchasedIds = playerData.upgrades.map(u => u.id);
         const shopUpgrades = await this.getRandomUpgrades(4, purchasedIds);
         
-        player.shopUpgrades = shopUpgrades.map(u => ({
+        const newShopUpgrades = shopUpgrades.map(u => ({
           id: u.id,
           name: u.name,
           description: u.description,
@@ -86,18 +129,25 @@ export class IdleGameService {
           maxLevel: u.maxLevel,
           purchased: 0,
         }));
-        await player.save();
+        
+        await prisma.player.update({
+          where: { playerId },
+          data: { shopUpgrades: JSON.parse(JSON.stringify(newShopUpgrades)) },
+        });
+        
+        playerData.shopUpgrades = newShopUpgrades;
       }
       
       // Verificar si las mejoras del jugador coinciden con la config de la DB
       const dbConfigs = await this.getUpgradeConfigs();
-      const playerUpgradeIds = player.upgrades.map(u => u.id);
+      const playerUpgradeIds = playerData.upgrades.map(u => u.id);
       const dbConfigIds = dbConfigs.map(c => c.id);
       
       // Si hay nuevas mejoras en la DB, agregarlas al inventario (no al shop)
+      let needsUpdate = false;
       for (const config of dbConfigs) {
         if (!playerUpgradeIds.includes(config.id)) {
-          player.upgrades.push({
+          playerData.upgrades.push({
             id: config.id,
             name: config.name,
             description: config.description,
@@ -107,20 +157,27 @@ export class IdleGameService {
             maxLevel: config.maxLevel,
             purchased: 0,
           });
+          needsUpdate = true;
         }
       }
       
       // Si hay mejoras en el jugador que ya no existen en la DB, marcarlas
-      for (const upgrade of player.upgrades) {
+      for (const upgrade of playerData.upgrades) {
         if (!dbConfigIds.includes(upgrade.id)) {
           upgrade.purchased = -1; // Marcador de mejora eliminada
+          needsUpdate = true;
         }
       }
       
-      await player.save();
+      if (needsUpdate) {
+        await prisma.player.update({
+          where: { playerId },
+          data: { upgrades: JSON.parse(JSON.stringify(playerData.upgrades)) },
+        });
+      }
+      
+      return playerData;
     }
-    
-    return player;
   }
 
   // Obtener estado completo del juego (formato cliente)
@@ -192,8 +249,7 @@ export class IdleGameService {
   }
 
   // Procesar click - USAR operación atómica para evitar race conditions
-  // FIX: Ahora incluye ingresos pasivos acumulados desde el último click/acción
-  async processClick(playerId: string): Promise<{ player: IPlayer; earned: number; passiveEarned: number; clickEarned: number }> {
+  async processClick(playerId: string): Promise<{ player: ReturnType<typeof toPlayerData>; earned: number; passiveEarned: number; clickEarned: number }> {
     console.log('[processClick] === INICIO ===');
     console.log('[processClick] playerId:', playerId);
     
@@ -215,26 +271,21 @@ export class IdleGameService {
       'clickEarned:', clickEarned,
       'total earned:', earned);
     
-    // Usar operación atómica $inc para evitar race conditions
-    const updatedPlayer = await PlayerModel.findOneAndUpdate(
-      { playerId },
-      { 
-        $inc: { coins: earned },
-        $set: { lastUpdate: now }
+    // Usar operación atómica para evitar race conditions
+    const updatedPlayer = await prisma.player.update({
+      where: { playerId },
+      data: {
+        coins: { increment: earned },
+        lastUpdate: BigInt(now),
       },
-      { new: true }
-    );
+    });
     
-    if (!updatedPlayer) {
-      throw new Error('Player not found');
-    }
+    console.log('[processClick] player.coins DESPUÉS de increment:', updatedPlayer.coins);
     
-    console.log('[processClick] player.coins DESPUES de $inc:', updatedPlayer.coins);
-    
-    return { player: updatedPlayer, earned, passiveEarned, clickEarned };
+    return { player: toPlayerData(updatedPlayer), earned, passiveEarned, clickEarned };
   }
 
-  // Calcular ingresos pasivos basados en tiempo - USAR operación atómica
+  // Calcular ingresos pasivos basados en tiempo
   async calculateOfflineProgress(playerId: string): Promise<{ earned: number; newCoins: number }> {
     // Primero obtener el valor actual
     const player = await this.getOrCreatePlayer(playerId);
@@ -255,26 +306,21 @@ export class IdleGameService {
     }
     
     // Usar operación atómica para evitar race conditions
-    const updatedPlayer = await PlayerModel.findOneAndUpdate(
-      { playerId },
-      { 
-        $inc: { coins: earned },
-        $set: { lastUpdate: now }
+    const updatedPlayer = await prisma.player.update({
+      where: { playerId },
+      data: {
+        coins: { increment: earned },
+        lastUpdate: BigInt(now),
       },
-      { new: true }
-    );
+    });
     
-    if (!updatedPlayer) {
-      return { earned: 0, newCoins: player.coins };
-    }
-
     return { earned, newCoins: updatedPlayer.coins };
   }
 
   // Comprar upgrade - USAR operaciones atómicas para evitar race conditions
   async buyUpgrade(playerId: string, upgradeId: string): Promise<{ 
     success: boolean; 
-    player?: IPlayer; 
+    player?: ReturnType<typeof toPlayerData>; 
     upgrade?: Upgrade; 
     error?: string 
   }> {
@@ -282,7 +328,7 @@ export class IdleGameService {
     console.log('[buyUpgrade] playerId:', playerId, 'upgradeId:', upgradeId);
     
     // Primero obtener la configuración del upgrade
-    const config = await UpgradeConfigModel.findOne({ id: upgradeId });
+    const config = await prisma.upgradeConfig.findUnique({ where: { id: upgradeId } });
     if (!config) {
       return { success: false, error: 'Upgrade config not found' };
     }
@@ -309,76 +355,72 @@ export class IdleGameService {
     const newCostMultiplier = Math.pow(config.costMultiplier, newPurchased);
     const newCost = Math.floor(config.baseCost * newCostMultiplier);
     
-    // Construir la actualización atómica
-    interface UpdateObject {
-      $inc: Record<string, number>;
-      $set: Record<string, unknown>;
-    }
-    
-    const updateObj: UpdateObject = {
-      $inc: { coins: -upgrade.cost },
-      $set: { 
-        lastUpdate: Date.now(),
-        'upgrades.$[elem].purchased': newPurchased,
-        'upgrades.$[elem].costMultiplier': newCostMultiplier,
-        'upgrades.$[elem].cost': newCost
-      }
+    // Construir la actualización
+    let data: any = {
+      coins: { decrement: upgrade.cost },
+      lastUpdate: BigInt(Date.now()),
     };
     
     // Agregar el efecto del upgrade
     if (config.type === 'click') {
-      updateObj.$inc.coinsPerClick = config.effect;
+      data.coinsPerClick = { increment: config.effect };
     } else if (config.type === 'passive') {
-      updateObj.$inc.coinsPerSecond = config.effect;
+      data.coinsPerSecond = { increment: config.effect };
     }
     
-    // Usar operación atómica con array filter
-    const updatedPlayer = await PlayerModel.findOneAndUpdate(
-      { 
-        playerId,
-        coins: { $gte: upgrade.cost },
-        upgrades: { 
-          $elemMatch: { 
-            id: upgradeId, 
-            purchased: { $gte: upgrade.purchased, $lt: config.maxLevel }
-          } 
-        }
-      },
-      updateObj,
-      { 
-        arrayFilters: [{ 'elem.id': upgradeId }],
-        new: true
+    // Actualizar el upgrade en el array
+    const updatedUpgrades = player.upgrades.map(u => {
+      if (u.id === upgradeId) {
+        return {
+          ...u,
+          purchased: newPurchased,
+          costMultiplier: newCostMultiplier,
+          cost: newCost,
+        };
       }
-    );
+      return u;
+    });
+    data.upgrades = JSON.parse(JSON.stringify(updatedUpgrades));
     
-    if (!updatedPlayer) {
+    // Usar transacción para asegurar consistencia
+    try {
+      const updatedPlayer = await prisma.player.update({
+        where: { playerId },
+        data,
+      });
+      
+      console.log('[buyUpgrade] player.coins GUARDADO:', updatedPlayer.coins, 'coinsPerClick:', updatedPlayer.coinsPerClick);
+
+      // Obtener el upgrade actualizado del jugador
+      const playerUpgrades = typeof updatedPlayer.upgrades === 'string' 
+        ? JSON.parse(updatedPlayer.upgrades) 
+        : updatedPlayer.upgrades;
+      const updatedUpgrade = playerUpgrades?.find((u: any) => u.id === upgradeId);
+      const playerData = toPlayerData(updatedPlayer);
+      
+      return { 
+        success: true, 
+        player: playerData,
+        upgrade: updatedUpgrade ? {
+          id: updatedUpgrade.id,
+          name: updatedUpgrade.name,
+          description: updatedUpgrade.description,
+          cost: updatedUpgrade.cost,
+          costMultiplier: updatedUpgrade.costMultiplier,
+          effect: updatedUpgrade.effect,
+          maxLevel: updatedUpgrade.maxLevel,
+          purchased: updatedUpgrade.purchased,
+        } : undefined
+      };
+    } catch (error) {
+      console.error('[buyUpgrade] Error:', error);
       // Verificar qué falló
-      const currentPlayer = await PlayerModel.findOne({ playerId });
+      const currentPlayer = await prisma.player.findUnique({ where: { playerId } });
       if (currentPlayer && currentPlayer.coins < upgrade.cost) {
         return { success: false, error: 'Insufficient coins' };
       }
       return { success: false, error: 'Upgrade purchase failed' };
     }
-    
-    console.log('[buyUpgrade] player.coins GUARDADO:', updatedPlayer.coins, 'coinsPerClick:', updatedPlayer.coinsPerClick);
-
-    // Obtener el upgrade actualizado del jugador
-    const updatedUpgrade = updatedPlayer.upgrades.find(u => u.id === upgradeId);
-    
-    return { 
-      success: true, 
-      player: updatedPlayer, 
-      upgrade: updatedUpgrade ? {
-        id: updatedUpgrade.id,
-        name: updatedUpgrade.name,
-        description: updatedUpgrade.description,
-        cost: updatedUpgrade.cost,
-        costMultiplier: updatedUpgrade.costMultiplier,
-        effect: updatedUpgrade.effect,
-        maxLevel: updatedUpgrade.maxLevel,
-        purchased: updatedUpgrade.purchased,
-      } : undefined
-    };
   }
 
   // Guardar estado del jugador
@@ -405,14 +447,15 @@ export class IdleGameService {
     // Actualizar upgrades - NO aceptamos purchased del cliente
     // Mantenemos los valores de purchased que ya tenemos en la DB
     // Solo recalculamos cost y costMultiplier desde la fórmula original
+    const updatedUpgrades = [...player.upgrades];
     for (const upgradeState of state.upgrades) {
-      const playerUpgrade = player.upgrades.find(u => u.id === upgradeState.id);
+      const playerUpgrade = updatedUpgrades.find(u => u.id === upgradeState.id);
       if (playerUpgrade && playerUpgrade.purchased >= 0) {
         // NO hacemos: playerUpgrade.purchased = upgradeState.purchased;
         // Mantenemos el valor de la DB
         
         // Recalcular costMultiplier y cost desde la configuración original
-        const config = await UpgradeConfigModel.findOne({ id: upgradeState.id });
+        const config = await prisma.upgradeConfig.findUnique({ where: { id: upgradeState.id } });
         if (config) {
           playerUpgrade.costMultiplier = Math.pow(config.costMultiplier, playerUpgrade.purchased);
           playerUpgrade.cost = Math.floor(config.baseCost * playerUpgrade.costMultiplier);
@@ -425,9 +468,9 @@ export class IdleGameService {
     let newCoinsPerClick = 1; // Base
     let newCoinsPerSecond = 0; // Base
     
-    for (const upgrade of player.upgrades) {
+    for (const upgrade of updatedUpgrades) {
       if (upgrade.purchased > 0) {
-        const config = await UpgradeConfigModel.findOne({ id: upgrade.id });
+        const config = await prisma.upgradeConfig.findUnique({ where: { id: upgrade.id } });
         if (config) {
           if (config.type === 'click') {
             newCoinsPerClick += config.effect * upgrade.purchased;
@@ -438,11 +481,16 @@ export class IdleGameService {
       }
     }
     
-    player.coinsPerClick = newCoinsPerClick;
-    player.coinsPerSecond = newCoinsPerSecond;
-    
-    player.lastUpdate = Date.now();
-    await player.save();
+    // Guardar con Prisma
+    await prisma.player.update({
+      where: { playerId },
+      data: {
+        coinsPerClick: newCoinsPerClick,
+        coinsPerSecond: newCoinsPerSecond,
+        upgrades: JSON.parse(JSON.stringify(updatedUpgrades)),
+        lastUpdate: BigInt(Date.now()),
+      },
+    });
 
     return { success: true };
   }
@@ -460,7 +508,7 @@ export class IdleGameService {
 
   // Eliminar jugador
   async deletePlayer(playerId: string): Promise<{ success: boolean }> {
-    await PlayerModel.deleteOne({ playerId });
+    await prisma.player.delete({ where: { playerId } });
     return { success: true };
   }
 
@@ -561,7 +609,7 @@ export class IdleGameService {
     const newShopUpgrades = await this.getRandomUpgrades(4, purchasedIds);
     
     // Guardar en el jugador
-    player.shopUpgrades = newShopUpgrades.map(u => ({
+    const shopUpgradesData = newShopUpgrades.map(u => ({
       id: u.id,
       name: u.name,
       description: u.description,
@@ -571,7 +619,11 @@ export class IdleGameService {
       maxLevel: u.maxLevel,
       purchased: 0,
     }));
-    await player.save();
+    
+    await prisma.player.update({
+      where: { playerId },
+      data: { shopUpgrades: JSON.parse(JSON.stringify(shopUpgradesData)) },
+    });
     
     return newShopUpgrades;
   }
@@ -593,8 +645,9 @@ export class IdleGameService {
     }
     
     // Deducir costo si aplica
+    const data: any = {};
     if (cost > 0) {
-      player.coins -= cost;
+      data.coins = { decrement: cost };
     }
     
     // Obtener IDs de upgrades ya comprados
@@ -604,7 +657,7 @@ export class IdleGameService {
     const newShopUpgrades = await this.getRandomUpgrades(4, purchasedIds);
     
     // Guardar en el jugador
-    player.shopUpgrades = newShopUpgrades.map(u => ({
+    data.shopUpgrades = JSON.parse(JSON.stringify(newShopUpgrades.map(u => ({
       id: u.id,
       name: u.name,
       description: u.description,
@@ -613,8 +666,12 @@ export class IdleGameService {
       effect: u.effect,
       maxLevel: u.maxLevel,
       purchased: 0,
-    }));
-    await player.save();
+    }))));
+    
+    await prisma.player.update({
+      where: { playerId },
+      data,
+    });
     
     return { success: true, upgrades: newShopUpgrades };
   }
@@ -651,7 +708,8 @@ export class IdleGameService {
     const newUpgrade = newUpgrades[0];
     
     // Reemplazar en el shop
-    player.shopUpgrades![shopIndex] = {
+    const newShopUpgrades = [...player.shopUpgrades!];
+    newShopUpgrades[shopIndex] = {
       id: newUpgrade.id,
       name: newUpgrade.name,
       description: newUpgrade.description,
@@ -662,7 +720,10 @@ export class IdleGameService {
       purchased: 0,
     };
     
-    await player.save();
+    await prisma.player.update({
+      where: { playerId },
+      data: { shopUpgrades: JSON.parse(JSON.stringify(newShopUpgrades)) },
+    });
     
     return { success: true, newUpgrade };
   }
@@ -690,43 +751,52 @@ export class IdleGameService {
     
     // Verificar si ya tiene este upgrade en el inventario
     const existingUpgrade = player.upgrades.find(u => u.id === upgradeId);
+    
+    // Obtener la config del upgrade
+    const config = await prisma.upgradeConfig.findUnique({ where: { id: upgradeId } });
+    if (!config) {
+      return { success: false, error: 'Upgrade config not found' };
+    }
+    
+    // Preparar datos de actualización
+    const data: any = {
+      coins: { decrement: shopUpgrade.cost },
+      lastUpdate: BigInt(Date.now()),
+    };
+    
     if (existingUpgrade) {
       // Verificar si puede seguir subiendo de nivel
-      const config = await UpgradeConfigModel.findOne({ id: upgradeId });
-      if (!config) {
-        return { success: false, error: 'Upgrade config not found' };
-      }
-      
       if (existingUpgrade.purchased >= config.maxLevel) {
         return { success: false, error: 'Max level reached' };
       }
       
-      // Deducir coins
-      player.coins -= shopUpgrade.cost;
-      
       // Actualizar el upgrade existente (comprar siguiente nivel)
-      existingUpgrade.purchased += 1;
-      existingUpgrade.costMultiplier = Math.pow(config.costMultiplier, existingUpgrade.purchased);
-      existingUpgrade.cost = Math.floor(config.baseCost * existingUpgrade.costMultiplier);
+      const newPurchased = existingUpgrade.purchased + 1;
+      const newCostMultiplier = Math.pow(config.costMultiplier, newPurchased);
+      const newCost = Math.floor(config.baseCost * newCostMultiplier);
+      
+      const updatedUpgrades = player.upgrades.map(u => {
+        if (u.id === upgradeId) {
+          return {
+            ...u,
+            purchased: newPurchased,
+            costMultiplier: newCostMultiplier,
+            cost: newCost,
+          };
+        }
+        return u;
+      });
+      data.upgrades = JSON.parse(JSON.stringify(updatedUpgrades));
       
       // Aplicar efecto
       if (config.type === 'click') {
-        player.coinsPerClick += config.effect;
+        data.coinsPerClick = { increment: config.effect };
       } else if (config.type === 'passive') {
-        player.coinsPerSecond += config.effect;
+        data.coinsPerSecond = { increment: config.effect };
       }
     } else {
       // Es un nuevo upgrade - agregarlo al inventario
-      const config = await UpgradeConfigModel.findOne({ id: upgradeId });
-      if (!config) {
-        return { success: false, error: 'Upgrade config not found' };
-      }
-      
-      // Deducir coins
-      player.coins -= shopUpgrade.cost;
-      
-      // Agregar al inventario
-      player.upgrades.push({
+      const newUpgrades = [...player.upgrades, {
         id: upgradeId,
         name: shopUpgrade.name,
         description: shopUpgrade.description,
@@ -735,28 +805,29 @@ export class IdleGameService {
         effect: shopUpgrade.effect,
         maxLevel: shopUpgrade.maxLevel,
         purchased: 1, // Primer nivel
-      });
+      }];
+      data.upgrades = JSON.parse(JSON.stringify(newUpgrades));
       
       // Aplicar efecto
       if (config.type === 'click') {
-        player.coinsPerClick += config.effect;
+        data.coinsPerClick = { increment: config.effect };
       } else if (config.type === 'passive') {
-        player.coinsPerSecond += config.effect;
+        data.coinsPerSecond = { increment: config.effect };
       }
     }
     
-    // Remover del shop (o decrementar si es nivelable)
-    player.shopUpgrades = player.shopUpgrades!.filter(u => u.id !== upgradeId);
+    // Remover del shop y agregar nuevo
+    const newShopUpgrades = player.shopUpgrades!.filter(u => u.id !== upgradeId);
     
     // Generar un nuevo upgrade para el shop si hay espacio
-    const purchasedIds = player.upgrades.map(u => u.id);
-    const currentShopIds = player.shopUpgrades.map(u => u.id);
+    const purchasedIds = data.upgrades.map((u: any) => u.id);
+    const currentShopIds = newShopUpgrades.map(u => u.id);
     const allExcludeIds = [...purchasedIds, ...currentShopIds];
     
-    const newUpgrades = await this.getRandomUpgrades(1, allExcludeIds);
-    if (newUpgrades.length > 0) {
-      const newU = newUpgrades[0];
-      player.shopUpgrades.push({
+    const newShopOptions = await this.getRandomUpgrades(1, allExcludeIds);
+    if (newShopOptions.length > 0) {
+      const newU = newShopOptions[0];
+      newShopUpgrades.push({
         id: newU.id,
         name: newU.name,
         description: newU.description,
@@ -768,8 +839,12 @@ export class IdleGameService {
       });
     }
     
-    player.lastUpdate = Date.now();
-    await player.save();
+    data.shopUpgrades = JSON.parse(JSON.stringify(newShopUpgrades));
+    
+    await prisma.player.update({
+      where: { playerId },
+      data,
+    });
     
     return { success: true };
   }

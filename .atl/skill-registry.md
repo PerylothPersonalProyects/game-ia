@@ -19,6 +19,20 @@
 | Game architecture patterns | game-architecture | D:\QA_Automatiozacion\Laboratorio_IA\.opencode\skills\game-architecture\SKILL.md |
 | DDD, Clean Architecture, Hexagonal | clean-ddd-hexagonal | D:\QA_Automatiozacion\Laboratorio_IA\.opencode\skills\clean-ddd-hexagonal\SKILL.md |
 
+## SDD Skills (Global)
+
+| Trigger | Skill | Path |
+|---------|-------|------|
+| Initialize SDD context | sdd-init | ~/.config/opencode/skills/sdd-init/SKILL.md |
+| Explore and investigate ideas | sdd-explore | ~/.config/opencode/skills/sdd-explore/SKILL.md |
+| Create change proposals | sdd-propose | ~/.config/opencode/skills/sdd-propose/SKILL.md |
+| Write specifications | sdd-spec | ~/.config/opencode/skills/sdd-spec/SKILL.md |
+| Create technical designs | sdd-design | ~/.config/opencode/skills/sdd-design/SKILL.md |
+| Break down into tasks | sdd-tasks | ~/.config/opencode/skills/sdd-tasks/SKILL.md |
+| Implement tasks | sdd-apply | ~/.config/opencode/skills/sdd-apply/SKILL.md |
+| Verify implementation | sdd-verify | ~/.config/opencode/skills/sdd-verify/SKILL.md |
+| Archive completed changes | sdd-archive | ~/.config/opencode/skills/sdd-archive/SKILL.md |
+
 ## Project Conventions
 
 | File | Path | Notes |

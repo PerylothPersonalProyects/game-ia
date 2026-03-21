@@ -16,27 +16,42 @@
     "test:watch": "vitest",
     "db:reset": "tsx scripts/reset-database.ts",
     "db:migrate": "tsx scripts/migrate-add-all-upgrades.ts",
-    "db:init": "tsx scripts/reset-database.ts && tsx scripts/migrate-add-all-upgrades.ts"
+    "db:init": "tsx scripts/reset-database.ts && tsx scripts/migrate-add-all-upgrades.ts",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:push": "npx prisma db push",
+    "prisma:seed": "npx tsx prisma/seed.ts",
+    "prisma:studio": "npx prisma studio",
+    "db:prisma:reset": "npm run prisma:push -- --force-reset && npm run prisma:seed",
+    "db:mysql:reset": "npx tsx scripts/reset-database-mysql.ts",
+    "db:mysql:deploy": "npx tsx scripts/generate-mysql-deploy.ts"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.0",
+    "mysql2": "^3.20.0",
+    "prisma": "^6.19.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mongoose": "^5.11.96",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.19.15",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "esbuild": "^0.24.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
+    "typescript": "^5.9.3",
     "vitest": "^2.1.0"
   }
 }

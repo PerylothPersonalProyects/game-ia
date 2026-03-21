@@ -12,8 +12,99 @@ import statsRoutes from './api/routes/stats.js';
 import leaderboardRoutes from './api/routes/leaderboard.js';
 import { rateLimitMiddleware } from './api/middleware/rateLimiter.js';
 import { authMiddleware } from './api/middleware/auth.js';
-import { connectDB } from './database/connection.js';
-import { seedDefaultUpgrades } from './database/models/Player.js';
+import { prisma } from './database/prisma.js';
+
+// ============================================
+// SEED DEFAULT UPGRADES (PRISMA)
+// ============================================
+
+const DEFAULT_UPGRADES = [
+  // Click upgrades
+  {
+    id: 'click_1',
+    name: 'Dedo Rápido',
+    description: 'Mejora tu dedo para hacer clicks más rápidos',
+    baseCost: 10,
+    costMultiplier: 1.5,
+    effect: 1,
+    maxLevel: 100,
+    type: 'click',
+    tier: 1,
+    enabled: true,
+  },
+  {
+    id: 'click_2',
+    name: 'Mano Firme',
+    description: 'Tu mano es más precisa y fuerte',
+    baseCost: 100,
+    costMultiplier: 1.6,
+    effect: 5,
+    maxLevel: 50,
+    type: 'click',
+    tier: 2,
+    enabled: true,
+  },
+  {
+    id: 'click_3',
+    name: 'Poder Digital',
+    description: 'Tus dedos tienen poder sobrenatural',
+    baseCost: 1000,
+    costMultiplier: 1.7,
+    effect: 25,
+    maxLevel: 25,
+    type: 'click',
+    tier: 3,
+    enabled: true,
+  },
+  // Passive upgrades
+  {
+    id: 'passive_1',
+    name: 'Inversor Novato',
+    description: 'Empieza a ganar dinero automáticamente',
+    baseCost: 50,
+    costMultiplier: 1.5,
+    effect: 1,
+    maxLevel: 100,
+    type: 'passive',
+    tier: 1,
+    enabled: true,
+  },
+  {
+    id: 'passive_2',
+    name: 'Emprendedor',
+    description: 'Tus inversiones generan más ganancias',
+    baseCost: 500,
+    costMultiplier: 1.6,
+    effect: 5,
+    maxLevel: 50,
+    type: 'passive',
+    tier: 2,
+    enabled: true,
+  },
+  {
+    id: 'passive_3',
+    name: 'Magnate',
+    description: 'Construye un imperio financiero',
+    baseCost: 5000,
+    costMultiplier: 1.7,
+    effect: 25,
+    maxLevel: 25,
+    type: 'passive',
+    tier: 3,
+    enabled: true,
+  },
+];
+
+async function seedDefaultUpgrades(): Promise<void> {
+  for (const upgrade of DEFAULT_UPGRADES) {
+    await prisma.upgradeConfig.upsert({
+      where: { id: upgrade.id },
+      update: upgrade,
+      create: upgrade,
+    });
+  }
+  console.log('Default upgrades seeded');
+}
 
 const PORT = process.env.PORT || 3001;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
@@ -29,10 +120,11 @@ async function main() {
   // Apply rate limiting to all requests (excludes /api/health by default)
   app.use(rateLimitMiddleware);
 
-  // Conexión a MongoDB
-  await connectDB();
+  // Conexión a Prisma MySQL
+  await prisma.$connect();
+  console.log('Prisma MySQL connected');
 
-  // Seed de upgrades por defecto
+  // Seed de upgrades por defecto (usando Prisma)
   await seedDefaultUpgrades();
 
   // Rutas RESTful para el Idle Game
@@ -74,6 +166,17 @@ async function main() {
     console.log(`Swagger UI: http://localhost:${PORT}/api-docs`);
     console.log(`OpenAPI spec: http://localhost:${PORT}/openapi.json`);
   });
+
+  // Graceful shutdown
+  const gracefulShutdown = async () => {
+    console.log('Shutting down gracefully...');
+    await prisma.$disconnect();
+    console.log('Prisma disconnected');
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 }
 
 main().catch(console.error);

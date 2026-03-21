@@ -36,3 +36,11 @@ dist-ssr/
 # Test
 coverage/
 .nyc_output/
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
+prisma/*.db
+prisma/*.db-journal
+
+# IDE
+.env.prisma.example

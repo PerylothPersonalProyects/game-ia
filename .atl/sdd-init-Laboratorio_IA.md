@@ -72,3 +72,16 @@ Laboratorio_IA/
 ## Existing SDD Artifacts
 
 - openspec/changes/qa-automation-test-suite/ (in progress)
+
+## Pending Change
+
+### Migración MongoDB a MySQL con Prisma ORM
+
+**Scope**:
+- Crear schema Prisma para Player y UpgradeConfig
+- Implementar sistema de migraciones versionadas
+- Scripts de seed para datos iniciales
+- Reescribir capa de datos (repositorios)
+- Documentar esquema de migraciones para futuras referencias
+
+**Status**: Ready for SDD workflow (`/sdd-new migracion-mongodb-mysql`)

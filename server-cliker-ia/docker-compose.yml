@@ -1,52 +1,41 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:7.0
-    container_name: clicker-mongodb
+  mysql:
+    image: mysql:5.7
+    container_name: clicker-mysql
     restart: unless-stopped
-    
-    # Puerto no estándar: 27027 (externo) → 27017 (interno)
-    # Solo accesible desde localhost y IPs autorizadas (ver firewall)
-    ports:
-      - "127.0.0.1:27027:27017"
-    
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: clicker-game
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: clicker_game
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin123
+    ports:
+      - "3306:3306"
     volumes:
-      - mongodb_data:/data/db
-    networks:
-      - clicker-network
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-padmin123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Mongo Express - Administrador web de MongoDB
-  # Puerto no estándar: 38081 (externo) → 8081 (interno)
-  mongo-express:
-    image: mongo-express:1.0.2
-    container_name: clicker-mongo-express
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: clicker-phpmyadmin
     restart: unless-stopped
-    
-    ports:
-      - "0.0.0.0:38081:8081"
-    
     environment:
-      ME_CONFIG_MONGODB_SERVER: mongodb
-      ME_CONFIG_MONGODB_PORT: 27017
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_ROOT_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://admin:${MONGODB_ROOT_PASSWORD}@mongodb:27017/
-      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+      PMA_HOST: mysql
+      PMA_USER: admin
+      PMA_PASSWORD: admin123
+      PMA_ARBITRARY: 0
+    ports:
+      - "8080:80"
     depends_on:
-      - mongodb
-    networks:
-      - clicker-network
+      mysql:
+        condition: service_healthy
 
 volumes:
-  mongodb_data:
+  mysql_data:
     driver: local
-
-networks:
-  clicker-network:
-    driver: bridge

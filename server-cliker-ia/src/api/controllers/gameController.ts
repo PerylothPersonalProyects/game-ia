@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { idleGameService } from '../../services/IdleGameService.js';
-import { connectDB } from '../../database/connection.js';
 import type { 
   ApiResponse, 
   GameState,
@@ -14,23 +13,6 @@ import type {
 function getPlayerId(param: string | string[] | undefined): string | null {
   if (!param) return null;
   return Array.isArray(param) ? param[0] : param;
-}
-
-// ============================================
-// MIDDLEWARE DE CONEXIÓN
-// ============================================
-
-export async function ensureDBConnection(req: Request, res: Response, next: Function) {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    const response: ApiResponse<null> = {
-      success: false,
-      error: 'Database connection failed',
-    };
-    return res.status(500).json(response);
-  }
 }
 
 // ============================================

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PlayerModel, IPlayer } from '../../database/models/Player.js';
+import { prisma } from '../../database/prisma.js';
 import { authMiddleware } from '../middleware/auth.js';
 import type { ApiResponse } from '../../types/idle-game.js';
 
@@ -98,22 +98,19 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
     
     const [totalPlayers, activePlayers, coinsAggregation] = await Promise.all([
-      PlayerModel.countDocuments(),
-      PlayerModel.countDocuments({ updatedAt: { $gte: oneDayAgo } }),
-      PlayerModel.aggregate([
-        {
-          $group: {
-            _id: null,
-            totalCoins: { $sum: '$coins' },
-          },
-        },
-      ]),
+      prisma.player.count(),
+      prisma.player.count({
+        where: { updatedAt: { gte: oneDayAgo } },
+      }),
+      prisma.player.aggregate({
+        _sum: { coins: true },
+      }),
     ]);
 
     const stats: GlobalStats = {
       totalPlayers,
       activePlayers,
-      totalCoins: coinsAggregation.length > 0 ? coinsAggregation[0].totalCoins : 0,
+      totalCoins: coinsAggregation._sum.coins || 0,
     };
 
     // Update cache
@@ -188,9 +185,20 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
  */
 router.get('/game/:userId/stats', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
 
-    const player = await PlayerModel.findOne({ playerId: userId });
+    const player = await prisma.player.findUnique({
+      where: { playerId: userId },
+      select: {
+        playerId: true,
+        coins: true,
+        coinsPerClick: true,
+        coinsPerSecond: true,
+        upgrades: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
     if (!player) {
       const response: ApiResponse<null> = {
@@ -200,16 +208,21 @@ router.get('/game/:userId/stats', authMiddleware, async (req: Request, res: Resp
       return res.status(404).json(response);
     }
 
+    // Parse upgrades if stored as JSON string
+    const upgrades = typeof player.upgrades === 'string' 
+      ? JSON.parse(player.upgrades) 
+      : player.upgrades;
+
     // Calculate stats
-    const upgradesPurchased = player.upgrades.reduce((sum, u) => sum + u.purchased, 0);
+    const upgradesPurchased = upgrades.reduce((sum: number, u: any) => sum + u.purchased, 0);
     
-    // Calculate play time in seconds (from createdAt to lastUpdate)
+    // Calculate play time in seconds (from createdAt to updatedAt)
     const playTimeMs = player.updatedAt.getTime() - player.createdAt.getTime();
     const playTimeSeconds = Math.floor(playTimeMs / 1000);
     
     // Estimate total coins earned (current + spent on upgrades)
     // This is an approximation since we don't track total earned
-    const upgradeCosts = player.upgrades.reduce((sum, u) => {
+    const upgradeCosts = upgrades.reduce((sum: number, u: any) => {
       // Rough approximation: cost * purchased
       return sum + (u.cost / u.costMultiplier || 0) * u.purchased;
     }, 0);

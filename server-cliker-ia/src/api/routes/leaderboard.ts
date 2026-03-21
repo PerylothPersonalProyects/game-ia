@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PlayerModel } from '../../database/models/Player.js';
+import { prisma } from '../../database/prisma.js';
 import { authMiddleware } from '../middleware/auth.js';
 import type { ApiResponse } from '../../types/idle-game.js';
 
@@ -107,15 +107,15 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     }
 
     // Get total count
-    const total = await PlayerModel.countDocuments();
+    const total = await prisma.player.count();
 
     // Get top players ranked by coins
-    const players = await PlayerModel.find({})
-      .sort({ coins: -1 })
-      .skip(offset)
-      .limit(limit)
-      .select('playerId coins')
-      .lean();
+    const players = await prisma.player.findMany({
+      orderBy: { coins: 'desc' },
+      skip: offset,
+      take: limit,
+      select: { playerId: true, coins: true },
+    });
 
     const rankings: LeaderboardEntry[] = players.map((player, index) => ({
       userId: player.playerId,
@@ -199,10 +199,13 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
  */
 router.get('/:userId/rank', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
 
     // Get the player
-    const player = await PlayerModel.findOne({ playerId: userId });
+    const player = await prisma.player.findUnique({
+      where: { playerId: userId },
+      select: { playerId: true, coins: true },
+    });
 
     if (!player) {
       const response: ApiResponse<null> = {
@@ -213,9 +216,10 @@ router.get('/:userId/rank', authMiddleware, async (req: Request, res: Response) 
     }
 
     // Count players with more coins than this player
-    const rank = await PlayerModel.countDocuments({
-      coins: { $gt: player.coins },
-    }) + 1;
+    const playersAbove = await prisma.player.count({
+      where: { coins: { gt: player.coins } },
+    });
+    const rank = playersAbove + 1;
 
     const rankResponse: PlayerRankResponse = {
       userId: player.playerId,
