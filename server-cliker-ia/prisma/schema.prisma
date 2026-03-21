@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/database/generated/prisma"  // Se sube al repo
 }
 
 datasource db {

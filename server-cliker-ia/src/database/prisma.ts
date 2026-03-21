@@ -2,7 +2,8 @@
 // PRISMA CLIENT - SINGLETON PATTERN
 // ============================================
 
-import { PrismaClient } from '@prisma/client';
+// Cliente Prisma generado en src/database/generated/prisma
+import { PrismaClient } from './generated/prisma';
 
 declare global {
   // eslint-disable-next-line no-var
