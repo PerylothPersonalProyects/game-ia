@@ -1,0 +1,110 @@
+-- ============================================
+-- SEED: 66 Upgrades para MySQL 5.7
+-- ============================================
+
+INSERT INTO `upgrade_configs` (`id`, `name`, `description`, `base_cost`, `cost_multiplier`, `effect`, `max_level`, `type`, `tier`, `enabled`) VALUES
+-- Tier 1 - Click Upgrades (3)
+('click_1_1', 'Dedo Flojo', 'Tu dedo es lento pero trabaja. +1 moneda por click', 10, 1.10, 1, 100, 'click', 1, 1),
+('click_1_2', 'Dedo Veloz', 'Tus dedos se mueven más rápido. +1 moneda por click', 15, 1.10, 1, 100, 'click', 1, 1),
+('click_1_3', 'Dedos Ágiles', 'Buenos reflejos para hacer clicks. +1 moneda por click', 20, 1.10, 1, 100, 'click', 1, 1),
+
+-- Tier 1 - Passive Upgrades (4)
+('passive_1_1', 'Moneda Suelta', 'Encuentra monedas en el suelo. +1 moneda por segundo', 25, 1.10, 1, 100, 'passive', 1, 1),
+('passive_1_2', 'Propina', 'Las personas te dan propina. +1 moneda por segundo', 35, 1.10, 1, 100, 'passive', 1, 1),
+('passive_1_3', 'Bolsillo', 'Tu bolsillo tiene dinero extra. +1 moneda por segundo', 45, 1.10, 1, 100, 'passive', 1, 1),
+('passive_1_4', 'Juega Lotería', 'Un ticket de lotería. +1 moneda por segundo', 55, 1.10, 1, 100, 'passive', 1, 1),
+
+-- Tier 2 - Click Upgrades (3)
+('click_2_1', 'Dedo Experto', 'Con años de práctica. +2 monedas por click', 100, 1.15, 2, 75, 'click', 2, 1),
+('click_2_2', 'Dedo Dorado', 'Dedo con magia antigua. +3 monedas por click', 200, 1.15, 3, 60, 'click', 2, 1),
+('click_2_3', 'Toque Real', 'Tienes el toque del rey Midas. +4 monedas por click', 350, 1.15, 4, 50, 'click', 2, 1),
+
+-- Tier 2 - Passive Upgrades (4)
+('passive_2_1', 'Trabajo Medio Tiempo', 'Ganas dinero extra. +2 monedas por segundo', 150, 1.15, 2, 75, 'passive', 2, 1),
+('passive_2_2', 'Venta de Garage', 'Vendes cosas usadas. +3 monedas por segundo', 250, 1.15, 3, 60, 'passive', 2, 1),
+('passive_2_3', 'Cuenta de Ahorro', 'El banco te paga intereses. +4 monedas por segundo', 400, 1.15, 4, 50, 'passive', 2, 1),
+('passive_2_4', 'Dividendos', 'Ganas de inversiones. +4 monedas por segundo', 550, 1.15, 4, 50, 'passive', 2, 1),
+
+-- Tier 3 - Click Upgrades (4)
+('click_3_1', 'Dedo Maestre', 'Años de experiencia. +5 monedas por click', 1000, 1.25, 5, 40, 'click', 3, 1),
+('click_3_2', 'Dedo de Acero', 'Duro como el acero. +7 monedas por click', 2000, 1.25, 7, 35, 'click', 3, 1),
+('click_3_3', 'Dedo Cibernético', 'Tecnología de punta. +10 monedas por click', 3500, 1.25, 10, 30, 'click', 3, 1),
+('click_3_4', 'Toque de Plata', 'El segundo mejor toque. +12 monedas por click', 5000, 1.25, 12, 25, 'click', 3, 1),
+
+-- Tier 3 - Passive Upgrades (4)
+('passive_3_1', 'Negocio Pequeño', 'Tienes tu propio negocio. +5 monedas por segundo', 1500, 1.25, 5, 40, 'passive', 3, 1),
+('passive_3_2', 'Alquiler', 'Ganas de alquilar propiedades. +7 monedas por segundo', 2500, 1.25, 7, 35, 'passive', 3, 1),
+('passive_3_3', 'Franquicia', 'Una franquicia exitosa. +10 monedas por segundo', 4000, 1.25, 10, 30, 'passive', 3, 1),
+('passive_3_4', 'Acciones', 'Ganas del mercado de valores. +12 monedas por segundo', 5500, 1.25, 12, 25, 'passive', 3, 1),
+
+-- Tier 4 - Click Upgrades (4)
+('click_4_1', 'Dedo Legendario', 'Solo los legends lo tienen. +15 monedas por click', 8000, 1.30, 15, 20, 'click', 4, 1),
+('click_4_2', 'Dedo Mítico', 'De las leyendas antiguas. +20 monedas por click', 12000, 1.30, 20, 18, 'click', 4, 1),
+('click_4_3', 'Dedo Divino', 'Bendecido por los dioses. +25 monedas por click', 18000, 1.30, 25, 15, 'click', 4, 1),
+('click_4_4', 'Toque de Oro', 'El legendary Midas touch. +30 monedas por click', 25000, 1.30, 30, 12, 'click', 4, 1),
+
+-- Tier 4 - Passive Upgrades (4)
+('passive_4_1', 'Empresa', 'Tienes una empresa. +15 monedas por segundo', 10000, 1.30, 15, 20, 'passive', 4, 1),
+('passive_4_2', 'Corporación', 'Una gran corporación. +20 monedas por segundo', 15000, 1.30, 20, 18, 'passive', 4, 1),
+('passive_4_3', 'Conglomerado', 'Una empresa multinacional. +25 monedas por segundo', 22000, 1.30, 25, 15, 'passive', 4, 1),
+('passive_4_4', 'Imperio', 'Un imperio financiero. +30 monedas por segundo', 30000, 1.30, 30, 12, 'passive', 4, 1),
+
+-- Tier 5 - Click Upgrades (5)
+('click_5_1', 'Dedo Cósmico', 'Del más allá. +40 monedas por click', 40000, 1.35, 40, 10, 'click', 5, 1),
+('click_5_2', 'Dedo Cuántico', 'Existe en múltiples dimensiones. +50 monedas por click', 60000, 1.35, 50, 8, 'click', 5, 1),
+('click_5_3', 'Dedo Dimensional', 'Atraviesa dimensiones. +65 monedas por click', 85000, 1.35, 65, 7, 'click', 5, 1),
+('click_5_4', 'Toque Ultravioleta', 'Más allá del oro. +80 monedas por click', 120000, 1.35, 80, 6, 'click', 5, 1),
+('click_5_5', 'Dedo Infinito', 'Infinito poder. +100 monedas por click', 180000, 1.35, 100, 5, 'click', 5, 1),
+
+-- Tier 5 - Passive Upgrades (5)
+('passive_5_1', 'Banco Central', 'Controlas el dinero. +40 monedas por segundo', 50000, 1.35, 40, 10, 'passive', 5, 1),
+('passive_5_2', 'Fondo de Inversión', 'Gestoras de dinero. +50 monedas por segundo', 75000, 1.35, 50, 8, 'passive', 5, 1),
+('passive_5_3', 'Banco Internacional', 'Gigante bancario. +65 monedas por segundo', 100000, 1.35, 65, 7, 'passive', 5, 1),
+('passive_5_4', 'Reserva Federal', 'El banco de los bancos. +80 monedas por segundo', 150000, 1.35, 80, 6, 'passive', 5, 1),
+('passive_5_5', 'Banco Galáctico', 'A través de la galaxia. +100 monedas por segundo', 220000, 1.35, 100, 5, 'passive', 5, 1),
+
+-- Tier 6 - Click Upgrades (4)
+('click_6_1', 'Dedo Singularidad', 'El poder de un agujero negro. +150 monedas por click', 300000, 1.40, 150, 4, 'click', 6, 1),
+('click_6_2', 'Dedo Omega', 'El fin de los dedos. +200 monedas por click', 450000, 1.40, 200, 3, 'click', 6, 1),
+('click_6_3', 'Dedo Alpha', 'El principio de todo. +275 monedas por click', 650000, 1.40, 275, 3, 'click', 6, 1),
+('click_6_4', 'Toque Omnipotente', 'Todo lo que tocas se vuelve oro. +400 monedas por click', 1000000, 1.40, 400, 2, 'click', 6, 1),
+
+-- Tier 6 - Passive Upgrades (4)
+('passive_6_1', 'Monopolio', 'Controlas el mercado. +150 monedas por segundo', 350000, 1.40, 150, 4, 'passive', 6, 1),
+('passive_6_2', 'Banco Mundial', 'Ganas del mundo. +200 monedas por segundo', 550000, 1.40, 200, 3, 'passive', 6, 1),
+('passive_6_3', 'Sistema Financiero Global', 'Controlas todo. +275 monedas por segundo', 800000, 1.40, 275, 3, 'passive', 6, 1),
+('passive_6_4', 'Dios del Dinero', 'Eres el dinero. +400 monedas por segundo', 1200000, 1.40, 400, 2, 'passive', 6, 1),
+
+-- Tier 7 - Click Upgrades (3)
+('click_7_1', 'Dedo Creator', 'Creas dinero de la nada. +600 monedas por click', 2000000, 1.50, 600, 2, 'click', 7, 1),
+('click_7_2', 'Dedo Realidad', 'Cambias la realidad. +900 monedas por click', 3500000, 1.50, 900, 2, 'click', 7, 1),
+('click_7_3', 'Toque del Universoo', 'El universo entero es tuyo. +1500 monedas por click', 5000000, 1.50, 1500, 1, 'click', 7, 1),
+
+-- Tier 7 - Passive Upgrades (3)
+('passive_7_1', 'Multiverso', 'Ganas de infinitos universos. +600 monedas por segundo', 2500000, 1.50, 600, 2, 'passive', 7, 1),
+('passive_7_2', 'Dimensión del Dinero', 'Una dimensión de riqueza. +900 monedas por segundo', 4000000, 1.50, 900, 2, 'passive', 7, 1),
+('passive_7_3', 'Omega Bank', 'El banco final. +1500 monedas por segundo', 6000000, 1.50, 1500, 1, 'passive', 7, 1),
+
+-- Tier 8 - Click Upgrades (2)
+('click_8_1', 'Dedo Big Bang', 'Creaste el universo. +3000 monedas por click', 10000000, 1.60, 3000, 1, 'click', 8, 1),
+('click_8_2', 'Dedo Eternidad', 'Tiempo infinito. +6000 monedas por click', 20000000, 1.60, 6000, 1, 'click', 8, 1),
+
+-- Tier 8 - Passive Upgrades (2)
+('passive_8_1', 'Infierno', 'Quema dinero eternamente. +3000 monedas por segundo', 15000000, 1.60, 3000, 1, 'passive', 8, 1),
+('passive_8_2', 'Cielo', 'El paraíso de la riqueza. +6000 monedas por segundo', 25000000, 1.60, 6000, 1, 'passive', 8, 1),
+
+-- Tier 9 - Click Upgrades (2)
+('click_9_1', 'Dedo Concepto', 'Eres el concepto del dinero. +20000 monedas por click', 50000000, 1.80, 20000, 1, 'click', 9, 1),
+('click_9_2', 'Dedo Existencia', 'Existir es generar dinero. +50000 monedas por click', 100000000, 1.80, 50000, 1, 'click', 9, 1),
+
+-- Tier 9 - Passive Upgrades (2)
+('passive_9_1', 'Karma Positivo', 'El universo te debe. +20000 monedas por segundo', 75000000, 1.80, 20000, 1, 'passive', 9, 1),
+('passive_9_2', 'Ley de Atracción', 'Atraes el dinero. +50000 monedas por segundo', 125000000, 1.80, 50000, 1, 'passive', 9, 1),
+
+-- Tier 10 - Click Upgrades (2)
+('click_10_1', 'Dedo Dios', 'Eres Dios del dinero. +200000 monedas por click', 500000000, 2.00, 200000, 1, 'click', 10, 1),
+('click_10_2', 'Dedo Absoluto', 'El absoluto infinito. +500000 monedas por click', 1000000000, 2.00, 500000, 1, 'click', 10, 1),
+
+-- Tier 10 - Passive Upgrades (2)
+('passive_10_1', 'Omniverso', 'Todos los universos son tuyos. +200000 monedas por segundo', 750000000, 2.00, 200000, 1, 'passive', 10, 1),
+('passive_10_2', 'Absoluto', 'Lo absoluto genera riqueza. +500000 monedas por segundo', 1500000000, 2.00, 500000, 1, 'passive', 10, 1);

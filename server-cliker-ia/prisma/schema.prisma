@@ -21,8 +21,8 @@ model Player {
   coins          Int      @default(0)
   coinsPerClick  Int      @default(1) @map("coins_per_click")
   coinsPerSecond Float    @default(0) @map("coins_per_second")
-  upgrades       Json     @default("[]")
-  shopUpgrades   Json     @default("[]") @map("shop_upgrades")
+  upgrades       Json?
+  shopUpgrades   Json?    @map("shop_upgrades")
   lastUpdate     BigInt   @map("last_update")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")

@@ -68,21 +68,44 @@ npm run prisma:push
 # Use only for development or when you manage schema manually.
 ```
 
-### Deploy to Production (cPanel)
+### Deploy to Production (cPanel with MySQL 5.7)
+
+**IMPORTANT**: MySQL 5.7 does NOT support `DEFAULT ("[]")` for JSON columns.
+Use the pre-built SQL files instead of Prisma CLI migrations.
 
 ```bash
-# 1. Make schema changes
-# 2. Generate deployment SQL
-npm run db:mysql:deploy
+# 1. Open phpMyAdmin
 
-# 3. In phpMyAdmin:
+# 2. Create database if needed
+#    - Go to SQL tab
+#    - Run: CREATE DATABASE clicker_game CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# 3. Import schema (NO JSON defaults - MySQL 5.7 compatible)
 #    - Select database
 #    - Go to Import tab
-#    - Upload prisma/migrations/TIMESTAMP_deploy/001_schema.sql
-#    - Upload prisma/migrations/TIMESTAMP_deploy/002_seed_upgrades.sql
+#    - Upload prisma/migrations/production_mysql57.sql
 
-# 4. Update DATABASE_URL in .env for production
+# 4. Import seed data (66 upgrades)
+#    - Go to Import tab
+#    - Upload prisma/migrations/production_seed.sql
+
+# 5. Verify tables created
+#    - Check 'players' table exists
+#    - Check 'upgrade_configs' table has 66 rows
 ```
+
+#### Files for MySQL 5.7 Production
+
+| File | Purpose |
+|------|---------|
+| `prisma/migrations/production_mysql57.sql` | Schema without JSON defaults |
+| `prisma/migrations/production_seed.sql` | 66 upgrades seed data |
+
+#### Schema Notes
+
+- `players.upgrades` and `players.shop_upgrades` are nullable JSON columns
+- The application initializes empty arrays `[]` in code, not in database
+- Prisma schema (`schema.prisma`) uses `@default("[]")` for local development only
 
 ### Add New Upgrade
 
