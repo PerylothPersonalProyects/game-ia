@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://admin:admin123@localhost:27017/clicker-game?authSource=admin';
+const MONGODB_URI = process.env.MONGODB_URI;
 const MONGODB_DB = process.env.MONGODB_DB || 'clicker-game';
 
 let isConnected = false;
@@ -9,6 +9,10 @@ export async function connectDB(): Promise<void> {
   if (isConnected) {
     console.log('MongoDB already connected');
     return;
+  }
+
+  if (!MONGODB_URI) {
+    throw new Error('MONGODB_URI environment variable is required');
   }
 
   try {

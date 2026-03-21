@@ -16,9 +16,13 @@ import { connectDB } from './database/connection.js';
 import { seedDefaultUpgrades } from './database/models/Player.js';
 
 const PORT = process.env.PORT || 3001;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: CORS_ORIGIN,
+  credentials: true,
+}));
 app.use(express.json());
 
 // Apply rate limiting to all requests (excludes /api/health by default)
@@ -53,8 +57,9 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: CORS_ORIGIN,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
