@@ -187,6 +187,10 @@ const config = {
         "fromEnvVar": null,
         "value": "windows",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -194,7 +198,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../../.env"
   },
   "relativePath": "../../../../prisma",
@@ -213,8 +217,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// Prisma Schema for Clicker Game\n// MySQL Database\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/database/generated/prisma\" // Se sube al repo\n}\n\ndatasource db {\n  provider          = \"mysql\"\n  url               = env(\"DATABASE_URL\")\n  shadowDatabaseUrl = env(\"SHADOW_DATABASE_URL\")\n}\n\n// ============================================\n// PLAYER MODEL\n// ============================================\n\nmodel Player {\n  id             String   @id @default(uuid())\n  playerId       String   @unique @map(\"player_id\")\n  coins          Int      @default(0)\n  coinsPerClick  Int      @default(1) @map(\"coins_per_click\")\n  coinsPerSecond Float    @default(0) @map(\"coins_per_second\")\n  upgrades       Json?\n  shopUpgrades   Json?    @map(\"shop_upgrades\")\n  lastUpdate     BigInt   @map(\"last_update\")\n  createdAt      DateTime @default(now()) @map(\"created_at\")\n  updatedAt      DateTime @updatedAt @map(\"updated_at\")\n\n  @@map(\"players\")\n}\n\n// ============================================\n// UPGRADE CONFIG MODEL\n// ============================================\n\nmodel UpgradeConfig {\n  id             String   @id\n  name           String\n  description    String?  @db.Text\n  baseCost       Int      @map(\"base_cost\")\n  costMultiplier Float    @default(1.15) @map(\"cost_multiplier\")\n  effect         Float\n  maxLevel       Int      @default(999) @map(\"max_level\")\n  type           String\n  tier           Int      @default(1)\n  enabled        Boolean  @default(true)\n  createdAt      DateTime @default(now()) @map(\"created_at\")\n  updatedAt      DateTime @updatedAt @map(\"updated_at\")\n\n  @@map(\"upgrade_configs\")\n}\n",
-  "inlineSchemaHash": "a6ed4f42e5a029728e0154e38e70675b1dedb2a27030243d9d0197b98300a590",
+  "inlineSchema": "// Prisma Schema for Clicker Game\n// MySQL Database\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../src/database/generated/prisma\"\n  binaryTargets = [\"native\", \"debian-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider          = \"mysql\"\n  url               = env(\"DATABASE_URL\")\n  shadowDatabaseUrl = env(\"SHADOW_DATABASE_URL\")\n}\n\n// ============================================\n// PLAYER MODEL\n// ============================================\n\nmodel Player {\n  id             String   @id @default(uuid())\n  playerId       String   @unique @map(\"player_id\")\n  coins          Int      @default(0)\n  coinsPerClick  Int      @default(1) @map(\"coins_per_click\")\n  coinsPerSecond Float    @default(0) @map(\"coins_per_second\")\n  upgrades       Json?\n  shopUpgrades   Json?    @map(\"shop_upgrades\")\n  lastUpdate     BigInt   @map(\"last_update\")\n  createdAt      DateTime @default(now()) @map(\"created_at\")\n  updatedAt      DateTime @updatedAt @map(\"updated_at\")\n\n  @@map(\"players\")\n}\n\n// ============================================\n// UPGRADE CONFIG MODEL\n// ============================================\n\nmodel UpgradeConfig {\n  id             String   @id\n  name           String\n  description    String?  @db.Text\n  baseCost       Int      @map(\"base_cost\")\n  costMultiplier Float    @default(1.15) @map(\"cost_multiplier\")\n  effect         Float\n  maxLevel       Int      @default(999) @map(\"max_level\")\n  type           String\n  tier           Int      @default(1)\n  enabled        Boolean  @default(true)\n  createdAt      DateTime @default(now()) @map(\"created_at\")\n  updatedAt      DateTime @updatedAt @map(\"updated_at\")\n\n  @@map(\"upgrade_configs\")\n}\n",
+  "inlineSchemaHash": "0d4d5d39777242b365761cac2fd40ed91a1aef2d018c42bc08908bef90414a0d",
   "copyEngine": true
 }
 
@@ -255,6 +259,10 @@ Object.assign(exports, Prisma)
 // file annotations for bundling tools to include these files
 path.join(__dirname, "query_engine-windows.dll.node");
 path.join(process.cwd(), "src/database/generated/prisma/query_engine-windows.dll.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
+path.join(process.cwd(), "src/database/generated/prisma/libquery_engine-debian-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "src/database/generated/prisma/schema.prisma")

@@ -2,8 +2,9 @@
 // MySQL Database
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/database/generated/prisma"  // Se sube al repo
+  provider      = "prisma-client-js"
+  output        = "../src/database/generated/prisma"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
