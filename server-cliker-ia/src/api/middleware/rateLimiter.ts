@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 
 // Rate limit configuration
-const IP_LIMIT = 100; // requests per IP per minute
-const USER_LIMIT = 200; // requests per userId per minute
+// Límites basados en comportamiento humano real para clicks de juego
+// Humano normal: 3-5 clicks/segundo = 180-300 clicks/min
+// Humano rápido: 8-10 clicks/segundo = 480-600 clicks/min
+const IP_LIMIT = 500; // requests per IP per minute (permite clicking rápido humano)
+const USER_LIMIT = 1000; // requests per userId per minute
 const WINDOW_MS = 60 * 1000; // 1 minute in milliseconds
 
 // In-memory storage for rate limiting
