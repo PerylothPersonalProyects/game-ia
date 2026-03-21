@@ -11,11 +11,10 @@ import healthRoutes from './api/routes/health.js';
 import statsRoutes from './api/routes/stats.js';
 import leaderboardRoutes from './api/routes/leaderboard.js';
 import { rateLimitMiddleware } from './api/middleware/rateLimiter.js';
-import { authMiddleware } from './api/middleware/auth.js';
-import { prisma } from './database/prisma.js';
+import { db } from './database/index.js';
 
 // ============================================
-// SEED DEFAULT UPGRADES (PRISMA)
+// SEED DEFAULT UPGRADES (KNEX)
 // ============================================
 
 const DEFAULT_UPGRADES = [
@@ -96,12 +95,42 @@ const DEFAULT_UPGRADES = [
 ];
 
 async function seedDefaultUpgrades(): Promise<void> {
+  const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  
   for (const upgrade of DEFAULT_UPGRADES) {
-    await prisma.upgradeConfig.upsert({
-      where: { id: upgrade.id },
-      update: upgrade,
-      create: upgrade,
-    });
+    const existing = await db('upgrade_configs').where('id', upgrade.id).first();
+    
+    if (existing) {
+      // Update existing
+      await db('upgrade_configs').where('id', upgrade.id).update({
+        name: upgrade.name,
+        description: upgrade.description,
+        base_cost: upgrade.baseCost,
+        cost_multiplier: upgrade.costMultiplier,
+        effect: upgrade.effect,
+        max_level: upgrade.maxLevel,
+        type: upgrade.type,
+        tier: upgrade.tier,
+        enabled: upgrade.enabled,
+        updated_at: now,
+      });
+    } else {
+      // Insert new
+      await db('upgrade_configs').insert({
+        id: upgrade.id,
+        name: upgrade.name,
+        description: upgrade.description,
+        base_cost: upgrade.baseCost,
+        cost_multiplier: upgrade.costMultiplier,
+        effect: upgrade.effect,
+        max_level: upgrade.maxLevel,
+        type: upgrade.type,
+        tier: upgrade.tier,
+        enabled: upgrade.enabled,
+        created_at: now,
+        updated_at: now,
+      });
+    }
   }
   console.log('Default upgrades seeded');
 }
@@ -120,12 +149,20 @@ async function main() {
   // Apply rate limiting to all requests (excludes /api/health by default)
   app.use(rateLimitMiddleware);
 
-  // Conexión a Prisma MySQL
-  await prisma.$connect();
-  console.log('Prisma MySQL connected');
+  // Test Knex MySQL connection
+  try {
+    await db.raw('SELECT 1');
+    console.log('Knex MySQL connected');
+  } catch (error) {
+    console.error('Failed to connect to MySQL via Knex:', error);
+  }
 
-  // Seed de upgrades por defecto (usando Prisma)
-  await seedDefaultUpgrades();
+  // Seed de upgrades por defecto (usando Knex)
+  try {
+    await seedDefaultUpgrades();
+  } catch (error) {
+    console.error('Failed to seed default upgrades:', error);
+  }
 
   // Rutas RESTful para el Idle Game
   app.use('/api/game', gameRoutes);
@@ -170,8 +207,8 @@ async function main() {
   // Graceful shutdown
   const gracefulShutdown = async () => {
     console.log('Shutting down gracefully...');
-    await prisma.$disconnect();
-    console.log('Prisma disconnected');
+    await db.destroy();
+    console.log('Knex disconnected');
     process.exit(0);
   };
 

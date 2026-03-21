@@ -2,13 +2,11 @@
 // DATABASE MODULE
 // ============================================
 
-// Prisma client singleton
-export { prisma } from './prisma.js';
+// Knex client singleton
+export { default as db } from './knex.js';
 
-// Repositories
-export {
-  PrismaPlayerRepository,
-  prismaPlayerRepository,
-  PrismaUpgradeConfigRepository,
-  prismaUpgradeConfigRepository,
-} from './repositories/index.js';
+// Types
+export * from './types.js';
+
+// Helpers
+export * from './helpers.js';

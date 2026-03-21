@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../database/prisma.js';
+import { db } from '../../database/index.js';
 
 const router = Router();
 
@@ -60,7 +60,7 @@ router.get('/', async (req: Request, res: Response) => {
   let dbConnected = false;
   try {
     // Try to run a simple query to check connection
-    await prisma.$queryRaw`SELECT 1`;
+    await db.raw('SELECT 1');
     dbConnected = true;
   } catch (error) {
     dbConnected = false;

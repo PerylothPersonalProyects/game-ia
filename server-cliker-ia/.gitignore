@@ -8,7 +8,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Dependencias
+# Dependências
 node_modules/
 jspm_packages/
 
@@ -38,24 +38,19 @@ coverage/
 .nyc_output/
 
 # ══════════════════════════════════════════════════════════════
-# PRISMA - Configuración de Base de Datos
+# KNEX - Configuración de Base de Datos
 # ══════════════════════════════════════════════════════════════
 #
 # ✅ SE SUBEN AL REPOSITORIO:
-#    - .prisma/client/           → Cliente Prisma compilado (NECESARIO para producción)
-#    - prisma/schema.prisma      → Schema de la base de datos
-#    - prisma/migrations/**      → Migraciones SQL (historial de cambios)
-#    - prisma/seed.ts            → Script de datos iniciales
-#    - prisma/*.sql              → Scripts SQL adicionales (deploy, seeds)
+#    - migrations/**              → Migraciones SQL (historial de cambios)
+#    - seeds/**                   → Datos iniciales
+#    - knexfile.ts               → Configuración de Knex
 #
 # ❌ NO se suben:
-prisma/migrations/**/migration_lock.toml
-prisma/*.db
-prisma/*.db-journal
-#
-# NOTA: .prisma/client/ se genera con `npx prisma generate` pero es
-#       necesario subirlo para producción (evita regenerar en deploys)
-# ══════════════════════════════════════════════════════════════
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
 
 # IDE
 .env.prisma.example

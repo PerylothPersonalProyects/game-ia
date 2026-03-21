@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../database/prisma.js';
+import { db } from '../../database/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import type { ApiResponse } from '../../types/idle-game.js';
 
@@ -97,20 +97,16 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     // Calculate stats from database
     const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
     
-    const [totalPlayers, activePlayers, coinsAggregation] = await Promise.all([
-      prisma.player.count(),
-      prisma.player.count({
-        where: { updatedAt: { gte: oneDayAgo } },
-      }),
-      prisma.player.aggregate({
-        _sum: { coins: true },
-      }),
+    const [totalPlayersResult, activePlayersResult, coinsAggregationResult] = await Promise.all([
+      db('players').count('* as count').first(),
+      db('players').where('updated_at', '>=', oneDayAgo).count('* as count').first(),
+      db('players').sum('coins as total').first(),
     ]);
 
     const stats: GlobalStats = {
-      totalPlayers,
-      activePlayers,
-      totalCoins: coinsAggregation._sum.coins || 0,
+      totalPlayers: Number(totalPlayersResult?.count) || 0,
+      activePlayers: Number(activePlayersResult?.count) || 0,
+      totalCoins: Number(coinsAggregationResult?.total) || 0,
     };
 
     // Update cache
@@ -187,18 +183,7 @@ router.get('/game/:userId/stats', authMiddleware, async (req: Request, res: Resp
   try {
     const userId = req.params.userId as string;
 
-    const player = await prisma.player.findUnique({
-      where: { playerId: userId },
-      select: {
-        playerId: true,
-        coins: true,
-        coinsPerClick: true,
-        coinsPerSecond: true,
-        upgrades: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const player = await db('players').where('player_id', userId).first();
 
     if (!player) {
       const response: ApiResponse<null> = {
@@ -217,7 +202,7 @@ router.get('/game/:userId/stats', authMiddleware, async (req: Request, res: Resp
     const upgradesPurchased = upgrades.reduce((sum: number, u: any) => sum + u.purchased, 0);
     
     // Calculate play time in seconds (from createdAt to updatedAt)
-    const playTimeMs = player.updatedAt.getTime() - player.createdAt.getTime();
+    const playTimeMs = new Date(player.updated_at).getTime() - new Date(player.created_at).getTime();
     const playTimeSeconds = Math.floor(playTimeMs / 1000);
     
     // Estimate total coins earned (current + spent on upgrades)
@@ -228,14 +213,14 @@ router.get('/game/:userId/stats', authMiddleware, async (req: Request, res: Resp
     }, 0);
 
     const playerStats: PlayerStats = {
-      playerId: player.playerId,
+      playerId: player.player_id,
       totalClicks: 0, // Not tracked directly, would need separate field
-      totalCoinsEarned: player.coins + Math.floor(upgradeCosts),
+      totalCoinsEarned: Number(player.coins) + Math.floor(upgradeCosts),
       upgradesPurchased,
       playTime: playTimeSeconds,
-      coins: player.coins,
-      coinsPerClick: player.coinsPerClick,
-      coinsPerSecond: player.coinsPerSecond,
+      coins: Number(player.coins),
+      coinsPerClick: Number(player.coins_per_click),
+      coinsPerSecond: Number(player.coins_per_second),
     };
 
     const response: ApiResponse<PlayerStats> = {

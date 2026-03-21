@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../database/prisma.js';
+import { db } from '../../database/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import type { ApiResponse } from '../../types/idle-game.js';
 
@@ -107,19 +107,19 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     }
 
     // Get total count
-    const total = await prisma.player.count();
+    const countResult = await db('players').count('* as count').first();
+    const total = Number(countResult?.count) || 0;
 
     // Get top players ranked by coins
-    const players = await prisma.player.findMany({
-      orderBy: { coins: 'desc' },
-      skip: offset,
-      take: limit,
-      select: { playerId: true, coins: true },
-    });
+    const players = await db('players')
+      .orderBy('coins', 'desc')
+      .limit(limit)
+      .offset(offset)
+      .select('player_id', 'coins');
 
     const rankings: LeaderboardEntry[] = players.map((player, index) => ({
-      userId: player.playerId,
-      coins: player.coins,
+      userId: player.player_id,
+      coins: Number(player.coins),
       rank: offset + index + 1,
     }));
 
@@ -202,10 +202,7 @@ router.get('/:userId/rank', authMiddleware, async (req: Request, res: Response) 
     const userId = req.params.userId as string;
 
     // Get the player
-    const player = await prisma.player.findUnique({
-      where: { playerId: userId },
-      select: { playerId: true, coins: true },
-    });
+    const player = await db('players').where('player_id', userId).select('player_id', 'coins').first();
 
     if (!player) {
       const response: ApiResponse<null> = {
@@ -216,14 +213,13 @@ router.get('/:userId/rank', authMiddleware, async (req: Request, res: Response) 
     }
 
     // Count players with more coins than this player
-    const playersAbove = await prisma.player.count({
-      where: { coins: { gt: player.coins } },
-    });
+    const playersAboveResult = await db('players').where('coins', '>', player.coins).count('* as count').first();
+    const playersAbove = Number(playersAboveResult?.count) || 0;
     const rank = playersAbove + 1;
 
     const rankResponse: PlayerRankResponse = {
-      userId: player.playerId,
-      coins: player.coins,
+      userId: player.player_id,
+      coins: Number(player.coins),
       rank,
     };
 
