@@ -14,10 +14,10 @@
     "start:cjs": "node dist/index.cjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate": "knex migrate:latest",
-    "db:migrate:rollback": "knex migrate:rollback",
-    "db:migrate:make": "knex migrate:make",
-    "db:seed": "knex seed:run",
+    "db:migrate": "knex migrate:latest --knexfile knexfile.cjs",
+    "db:migrate:rollback": "knex migrate:rollback --knexfile knexfile.cjs",
+    "db:migrate:make": "knex migrate:make --knexfile knexfile.cjs",
+    "db:seed": "knex seed:run --knexfile knexfile.cjs",
     "db:reset": "npm run db:migrate:rollback && npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
