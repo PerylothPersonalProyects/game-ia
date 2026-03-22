@@ -5,6 +5,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Server } from 'socket.io';
 import { setupSocketHandlers } from './socket/handlers.js';
+import { setupIdleGameHandlers } from './socket/idleGameHandler.js';
 import { swaggerOptions } from './swagger.js';
 import gameRoutes from './api/routes/gameRoutes.js';
 import healthRoutes from './api/routes/health.js';
@@ -193,10 +194,15 @@ async function main() {
     },
   });
 
+  // Setup Socket.io handlers
+  // Multiplayer room handlers (existing)
   io.on('connection', (socket) => {
-    console.log(`Client connected: ${socket.id}`);
+    console.log(`[WS] Client connected: ${socket.id}`);
     setupSocketHandlers(socket);
   });
+  
+  // Idle game handlers (new - for single player clicker)
+  setupIdleGameHandlers(io);
 
   httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
