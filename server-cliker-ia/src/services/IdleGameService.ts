@@ -237,46 +237,52 @@ export class IdleGameService {
     return this.getUpgradeConfigs();
   }
 
-  // Procesar click - USAR operación atómica para evitar race conditions
+  // Procesar click - Agrega pasivo acumulado + click
+  // El sync periódico solo agrega pasivo cuando NO hay interacción
   async processClick(playerId: string): Promise<{ player: ReturnType<typeof toPlayerData>; earned: number; passiveEarned: number; clickEarned: number }> {
     console.log('[processClick] === INICIO ===');
     console.log('[processClick] playerId:', playerId);
     
-    // Primero obtener el valor actual para saber cuánto ganó
     const player = await this.getOrCreatePlayer(playerId);
     const now = Date.now();
     
-    // Calcular ingresos pasivos acumulados desde la última acción
+    // Calcular pasivo acumulado desde la última acción (click o sync)
     const secondsSinceLastAction = Math.max(0, Math.floor((now - player.lastUpdate) / 1000));
     const passiveEarned = player.coinsPerSecond * secondsSinceLastAction;
     const clickEarned = player.coinsPerClick;
-    const earned = clickEarned + passiveEarned;
+    const earned = passiveEarned + clickEarned;
     
-    console.log('[processClick] player.coins LEIDO de DB:', player.coins, 
-      'coinsPerClick:', player.coinsPerClick, 
-      'coinsPerSecond:', player.coinsPerSecond,
-      'secondsSinceLastAction:', secondsSinceLastAction,
-      'passiveEarned:', passiveEarned,
-      'clickEarned:', clickEarned,
-      'total earned:', earned);
+    console.log('[processClick] passiveEarned:', passiveEarned, 'clickEarned:', clickEarned, 'total:', earned);
     
-    // Usar operación atómica para evitar race conditions
+    // Operación atómica: agregar pasivo + click
     await db('players').where('player_id', playerId).update({
       coins: db.raw('coins + ?', [earned]),
       last_update: BigInt(now).toString(),
     });
     
     const updatedRow = await db('players').where('player_id', playerId).first();
-    console.log('[processClick] player.coins DESPUÉS de increment:', updatedRow.coins);
+    console.log('[processClick] player.coins después:', updatedRow.coins);
     
-    return { player: toPlayerData(parsePlayerRow(updatedRow)), earned, passiveEarned, clickEarned };
+    return { 
+      player: toPlayerData(parsePlayerRow(updatedRow)), 
+      earned, 
+      passiveEarned, 
+      clickEarned 
+    };
   }
 
-  // Agregar solo ingresos pasivos (para sync periódico, NO incluye click)
+  // Agregar solo ingresos pasivos para sync periódico
+  // Solo agrega si pasó al menos 1 segundo desde última acción
   async addPassiveIncome(playerId: string): Promise<{ earned: number }> {
     const player = await this.getOrCreatePlayer(playerId);
     const now = Date.now();
     const seconds = Math.max(0, Math.floor((now - player.lastUpdate) / 1000));
+    
+    // Solo agregar si pasó tiempo suficiente (evitar duplicados con processClick)
+    if (seconds < 1) {
+      return { earned: 0 };
+    }
+    
     const earned = player.coinsPerSecond * seconds;
     
     if (earned > 0) {
