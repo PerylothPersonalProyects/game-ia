@@ -378,6 +378,20 @@ export class IdleGameService {
     });
     data.upgrades = JSON.stringify(updatedUpgrades);
     
+    // Also update shopUpgrades to keep data in sync
+    const updatedShopUpgrades = player.shopUpgrades.map(u => {
+      if (u.id === upgradeId) {
+        return {
+          ...u,
+          purchased: newPurchased,
+          costMultiplier: newCostMultiplier,
+          cost: newCost,
+        };
+      }
+      return u;
+    });
+    data.shop_upgrades = JSON.stringify(updatedShopUpgrades);
+    
     // Usar transacción para asegurar consistencia
     try {
       await db('players').where('player_id', playerId).update(data);
