@@ -14,8 +14,15 @@ module.exports = {
       database: process.env.DB_NAME || 'clicker_game',
     },
     pool: { min: 2, max: 10 },
-    migrations: { tableName: 'knex_migrations', directory: './migrations' },
-    seeds: { directory: './seeds' },
+    migrations: { 
+      tableName: 'knex_migrations', 
+      directory: './migrations',
+      extension: 'cjs' 
+    },
+    seeds: { 
+      directory: './seeds',
+      extension: 'cjs'
+    },
   },
   production: {
     client: 'mysql2',
@@ -27,7 +34,14 @@ module.exports = {
       database: process.env.DB_NAME,
     },
     pool: { min: 2, max: 10 },
-    migrations: { tableName: 'knex_migrations', directory: './migrations' },
-    seeds: { directory: './seeds' },
+    migrations: { 
+      tableName: 'knex_migrations', 
+      directory: './migrations',
+      extension: 'cjs' 
+    },
+    seeds: { 
+      directory: './seeds',
+      extension: 'cjs'
+    },
   },
 };
