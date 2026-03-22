@@ -73,8 +73,8 @@ export function setupIdleGameHandlers(io: Server) {
             
             // Only sync if there's passive income
             if (passiveEarned > 0) {
-              // Calculate and add passive earnings
-              await idleGameService.processClick(playerId);
+              // Add passive earnings only (NOT click - that would double-count!)
+              await idleGameService.addPassiveIncome(playerId);
               
               // Get updated state
               const updatedPlayer = await idleGameService.getOrCreatePlayer(playerId);

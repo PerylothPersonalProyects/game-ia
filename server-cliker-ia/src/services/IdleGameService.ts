@@ -272,6 +272,23 @@ export class IdleGameService {
     return { player: toPlayerData(parsePlayerRow(updatedRow)), earned, passiveEarned, clickEarned };
   }
 
+  // Agregar solo ingresos pasivos (para sync periódico, NO incluye click)
+  async addPassiveIncome(playerId: string): Promise<{ earned: number }> {
+    const player = await this.getOrCreatePlayer(playerId);
+    const now = Date.now();
+    const seconds = Math.max(0, Math.floor((now - player.lastUpdate) / 1000));
+    const earned = player.coinsPerSecond * seconds;
+    
+    if (earned > 0) {
+      await db('players').where('player_id', playerId).update({
+        coins: db.raw('coins + ?', [earned]),
+        last_update: BigInt(now).toString(),
+      });
+    }
+    
+    return { earned };
+  }
+
   // Calcular ingresos pasivos basados en tiempo
   async calculateOfflineProgress(playerId: string): Promise<{ earned: number; newCoins: number }> {
     // Primero obtener el valor actual
