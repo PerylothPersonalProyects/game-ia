@@ -9,9 +9,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { GameState, Upgrade } from '../types';
-import { initialState, passiveIncome, purchaseUpgrade, canAfford } from '../store/gameStore';
+import { initialState, purchaseUpgrade, canAfford } from '../store/gameStore';
 import { stateToRenderData, type RenderData } from '../game/gameApi';
 import { gameApi } from '../api/gameApi';
+import { useWebSocket, type GameStateWS } from '../hooks/useWebSocket';
 
 // ============================================
 // PLAYER ID - Identificador único del jugador
@@ -36,6 +37,7 @@ export function useGame() {
   const [gameState, setGameState] = useState<GameState>(initialState);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
+  const [wsError, setWsError] = useState<string | null>(null);
   
   // Store playerId in state to avoid ref access during render
   const [playerId] = useState(() => getOrCreatePlayerId());
@@ -55,31 +57,73 @@ export function useGame() {
   }, [gameState]);
 
   // ============================================
-  // INICIALIZACIÓN
+  // WEBSOCKET HANDLER
   // ============================================
   
-  // Cargar estado del servidor
-  useEffect(() => {
-    const loadFromServer = async () => {
-      try {
-        console.log('[useGame] Cargando desde servidor...');
-        const state = await gameApi.initGame(playerId);
-        setGameState(state);
-        setIsOnline(true);
-        console.log('[useGame] Cargado. Upgrades:', state.upgrades.length);
-      } catch (error) {
-        console.warn('[useGame] Error, usando local:', error);
-        const saved = localStorage.getItem('idle-clicker-game');
-        if (saved) {
-          setGameState(JSON.parse(saved));
-        }
-        setIsOnline(false);
-      }
-      setIsLoaded(true);
-    };
+  // Convert WebSocket state to GameState
+  const updateFromWebSocket = useCallback((wsState: GameStateWS) => {
+    console.log('[useGame] Updating from WebSocket:', wsState);
     
-    loadFromServer();
+    setGameState(prev => ({
+      ...prev,
+      coins: wsState.coins,
+      coinsPerClick: wsState.coinsPerClick,
+      coinsPerSecond: wsState.coinsPerSecond,
+      upgrades: wsState.upgrades || prev.upgrades,
+      shopUpgrades: wsState.shopUpgrades || prev.shopUpgrades,
+    }));
   }, []);
+  
+  // Handle WebSocket errors
+  const handleWsError = useCallback((error: string) => {
+    console.error('[useGame] WebSocket error:', error);
+    setWsError(error);
+  }, []);
+  
+  // WebSocket connection
+  const { isConnected, hasJoined, click: wsClick, buy: wsBuy } = useWebSocket({
+    playerId,
+    onStateUpdate: updateFromWebSocket,
+    onError: handleWsError,
+  });
+  
+  // Track connection state
+  useEffect(() => {
+    if (isConnected && hasJoined) {
+      setIsOnline(true);
+      setIsLoaded(true);
+      setWsError(null);
+      console.log('[useGame] WebSocket connected and joined');
+    } else if (isConnected && !hasJoined) {
+      console.log('[useGame] WebSocket connecting...');
+    } else {
+      setIsOnline(false);
+    }
+  }, [isConnected, hasJoined]);
+  
+  // Fallback: Si WebSocket falla, usar REST API
+  useEffect(() => {
+    if (wsError && !isLoaded) {
+      console.warn('[useGame] WebSocket failed, falling back to REST API');
+      
+      const loadFromServer = async () => {
+        try {
+          const state = await gameApi.initGame(playerId);
+          setGameState(state);
+          setIsOnline(true);
+        } catch (error) {
+          console.warn('[useGame] REST fallback also failed:', error);
+          const saved = localStorage.getItem('idle-clicker-game');
+          if (saved) {
+            setGameState(JSON.parse(saved));
+          }
+        }
+        setIsLoaded(true);
+      };
+      
+      loadFromServer();
+    }
+  }, [wsError]);
 
   // ============================================
   // PERSISTENCIA
@@ -102,25 +146,23 @@ export function useGame() {
   }, [isLoaded, saveGame]);
 
   // ============================================
-  // GENERACIÓN PASIVA
+  // GENERACIÓN PASIVA (ahora viene del servidor via WebSocket)
   // ============================================
+  // El servidor envía actualizaciones via WebSocket sync event
+  // Ya no necesitamos calcular pasivo localmente
   
-  useEffect(() => {
-    if (!isLoaded) return;
-    
-    const interval = setInterval(() => {
-      setGameState(prev => passiveIncome(prev));
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [isLoaded]);
-
   // ============================================
   // ACCIONES DEL JUGADOR
   // ============================================
 
   const handleClick = useCallback(async () => {
-    // Always read current values at execution time, not at creation time
+    // Usar WebSocket si está conectado
+    if (hasJoined) {
+      wsClick();
+      return;
+    }
+    
+    // Fallback a REST API si WebSocket no está disponible
     const currentPlayerId = playerId;
     const currentState = gameStateRef.current;
     const isCurrentlyOnline = isOnlineRef.current;
@@ -158,7 +200,7 @@ export function useGame() {
         console.error('[handleClick] Error calling server:', error);
       }
     }
-  }, []);
+  }, [hasJoined, wsClick]);
 
   const handleBuyUpgrade = useCallback(async (upgradeId: string) => {
     const currentState = gameStateRef.current;
@@ -166,12 +208,19 @@ export function useGame() {
     
     console.log('[handleBuyUpgrade] Intentando comprar:', upgradeId, 'coins:', currentState.coins);
     
-    // Verificar si puede comprar
+    // Verificar si puede comprar (validación local para UX)
     if (!canAfford(currentState, upgradeId)) {
       console.log('[handleBuyUpgrade] No puede comprar');
       return;
     }
     
+    // Usar WebSocket si está conectado
+    if (hasJoined) {
+      wsBuy(upgradeId);
+      return;
+    }
+    
+    // Fallback a REST API si WebSocket no está disponible
     // Sincronizar con servidor
     if (isCurrentlyOnline) {
       try {
@@ -232,7 +281,7 @@ export function useGame() {
     
     // Auto-save después de comprar
     setTimeout(saveGame, 100);
-  }, [saveGame]);
+  }, [saveGame, hasJoined, wsBuy]);
 
   const handleReset = useCallback(async () => {
     try {
