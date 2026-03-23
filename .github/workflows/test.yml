@@ -52,7 +52,7 @@ jobs:
       
       - name: Install dependencies
         working-directory: ./server-cliker-ia
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Run Vitest with Coverage
         working-directory: ./server-cliker-ia
@@ -81,7 +81,7 @@ jobs:
       
       - name: Install dependencies
         working-directory: ./cliker-ia
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Run Vitest with Coverage
         working-directory: ./cliker-ia
