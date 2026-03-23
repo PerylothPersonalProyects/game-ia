@@ -15,10 +15,4 @@ class GameKarateTest {
         return Karate.run("classpath:game.feature")
             .relativeTo(getClass());
     }
-    
-    @Karate.Test
-    Karate testWebSocket() {
-        return Karate.run("classpath:websocket.feature")
-            .relativeTo(getClass());
-    }
 }

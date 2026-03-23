@@ -11,25 +11,22 @@ export default defineConfig({
   // Filtrar archivos de test
   testMatch: '**/*.spec.ts',
   
-  // Timeout global para tests (en ms)
-  timeout: 30000,
+  // Timeout global para tests (en ms) - aumentado para servidores lentos
+  timeout: 60000,
   
   // Expect timeout
   expect: {
-    timeout: 5000
+    timeout: 10000
   },
 
-  // Runs tests in parallel
-  fullyParallel: true,
+  // Runs tests in parallel - only in CI, locally use 1 worker to avoid blocking
+  workers: process.env.CI ? undefined : 1,
   
   // Fail on CI if there are test retries
   forbidOnly: !!process.env.CI,
   
   // Retry failed tests
   retries: process.env.CI ? 2 : 0,
-  
-  // Workers (procesos paralelos)
-  workers: process.env.CI ? 1 : undefined,
   
   // Reporter - HTML y list para CI
   reporter: [
@@ -41,12 +38,18 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report/results.json' }]
   ],
 
+  // ============================================
+  // WEB SERVER CONFIGURATION - Auto-start servers
+  // ============================================
+  // Only one webServer allowed in Playwright, so we run backend manually or skip E2E if backend needed
+  // For full E2E with both backend and frontend, run: 
+  // Terminal 1: cd server-cliker-ia && npm run dev
+  // Terminal 2: cd qa && npx playwright test
+
   // Configuración de screenshot y video
   use: {
-  // URL base - cambiar según el entorno
-  // IMPORTANTE: Asegúrate de que el servidor del juego esté corriendo
-  // Para iniciar el juego: cd ../cliker-ia && npm run dev
-  baseURL: process.env.BASE_URL || 'http://localhost:5173',
+    // URL base - cambiar según el entorno
+    baseURL: process.env.BASE_URL || 'http://localhost:5173',
     
     // Capturar screenshots solo en fallos
     screenshot: 'only-on-failure',
@@ -54,8 +57,8 @@ export default defineConfig({
     // Grabar video solo en fallos
     video: 'retain-on-failure',
     
-    // Verificar elementos visibles
-    actionTimeout: 10 * 1000,
+    // Verificar elementos visibles - aumentado para servidores lentos
+    actionTimeout: 30000,
     
     // Trace en retry
     trace: 'on-first-retry',

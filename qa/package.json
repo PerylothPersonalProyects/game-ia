@@ -7,7 +7,20 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    
+    "test:e2e": "playwright test tests/game.spec.ts tests/gameplay.spec.ts tests/visual.spec.ts",
+    "test:api": "playwright test tests/api.spec.ts",
+    
+    "pretest:e2e": "npm run start:servers",
+    "test:e2e:ci": "playwright test tests/game.spec.ts tests/gameplay.spec.ts tests/visual.spec.ts",
+    "posttest:e2e": "npm run stop:servers",
+    
+    "start:servers": "npm run start:backend & npm run start:frontend & timeout /t 8",
+    "start:backend": "cd ../server-cliker-ia && npm run dev",
+    "start:frontend": "cd ../cliker-ia && npm run dev",
+    
+    "stop:servers": "cmd //c \"taskkill /IM node.exe /F\""
   },
   "keywords": ["playwright", "e2e", "testing", "game"],
   "author": "",

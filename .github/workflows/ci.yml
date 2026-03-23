@@ -74,6 +74,7 @@ jobs:
         run: npm run build
 
       - name: Zip build artifacts
+        working-directory: ./cliker-ia
         run: zip -r ../cliker-ia-build.zip dist/
 
       - name: Upload build artifacts

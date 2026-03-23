@@ -1,8 +1,8 @@
 function fn() {
   var config = {
-    baseUrl: 'http://localhost:3000',
-    apiUrl: 'http://localhost:3000/api',
-    wsUrl: 'ws://localhost:3000',
+    baseUrl: 'http://localhost:3001',
+    apiUrl: 'http://localhost:3001/api',
+    wsUrl: 'ws://localhost:3001',
     
     // Tiempo de espera para operaciones
     timeout: 10000,
@@ -18,6 +18,11 @@ function fn() {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
+    },
+    
+    // Función UUID usando Java interop
+    uuid: function() {
+      return java.util.UUID.randomUUID().toString();
     }
   };
 
