@@ -22,14 +22,6 @@ dependencies {
 test {
     useJUnitPlatform()
     
-    // Pasar propiedades del sistema a los tests
-    if (project.hasProperty('apiUrl')) {
-        systemProperty 'apiUrl', project.property('apiUrl')
-    }
-    if (project.hasProperty('wsUrl')) {
-        systemProperty 'wsUrl', project.property('wsUrl')
-    }
-    
     // Reportes
     reports {
         html.required = true

@@ -19,7 +19,7 @@ jobs:
       
       - name: Run Karate Tests
         working-directory: ./karate
-        run: gradle test -PapiUrl=${{ secrets.KARATE_API_URL }} -PwsUrl=${{ secrets.KARATE_WS_URL }}
+        run: gradle test -Dapi.url="${{ secrets.KARATE_API_URL }}" -Dws.url="${{ secrets.KARATE_WS_URL }}"
       
       - name: Upload Karate Test Results
         if: failure()
