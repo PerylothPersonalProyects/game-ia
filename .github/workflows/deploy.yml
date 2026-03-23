@@ -36,17 +36,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       # Playwright tests
       - name: Install Playwright
-        run: |
-          cd qa && npm ci
-          npx playwright install --with-deps
+        working-directory: ./qa
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        run: |
-          cd qa && npx playwright test
+        working-directory: ./qa
+        run: npx playwright test
         env:
           BASE_URL: ${{ steps.endpoint.outputs.ENDPOINT }}
 
@@ -58,7 +59,7 @@ jobs:
           java-version: '17'
 
       - name: Run Karate tests
-        run: |
-          cd karate && gradle test
+        working-directory: ./karate
+        run: gradle test
         env:
           BASE_URL: ${{ steps.endpoint.outputs.ENDPOINT }}
