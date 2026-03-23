@@ -3,6 +3,8 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch: 
 
 env:
@@ -76,13 +78,6 @@ jobs:
       - name: Zip build artifacts
         working-directory: ./cliker-ia
         run: zip -r ../cliker-ia-build.zip dist/
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: cliker-ia-build.zip
-          retention-days: 7
 
       - name: Create Git Tag
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
