@@ -13,21 +13,15 @@ function() {
         }
     };
     
-    // Si hay variables de entorno o propiedades del sistema, usarlas
-    // Soporta secrets de GitHub Actions como variables de ambiente
+    // Leer propiedades del sistema (pasadas con -D en gradle)
+    // GitHub Actions secrets se pasan como variables de entorno automáticamente
     var apiUrl = 
         karate.properties['api.url'] || 
-        karate.envVars['KARATE_API_URL'] || 
-        karate.envVars['apiUrl'] || 
-        karate.envVars['API_URL'] ||
-        java.lang.System.getProperty('apiUrl');
+        java.lang.System.getProperty('api.url');
         
     var wsUrl = 
         karate.properties['ws.url'] || 
-        karate.envVars['KARATE_WS_URL'] || 
-        karate.envVars['wsUrl'] || 
-        karate.envVars['WS_URL'] ||
-        java.lang.System.getProperty('wsUrl');
+        java.lang.System.getProperty('ws.url');
     
     if (apiUrl) {
         config.baseUrl = apiUrl;
