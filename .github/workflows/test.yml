@@ -29,11 +29,12 @@ jobs:
         run: mvn test -Dapi.url=${{ secrets.KARATE_API_URL }} -Dws.url=${{ secrets.KARATE_WS_URL }}
       
       - name: Upload Karate Test Results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: karate-test-results
           path: karate/target/surefire-reports/
+          retention-days: 1
           retention-days: 1
 
   vitest-server-coverage:
@@ -59,6 +60,7 @@ jobs:
         run: npm run test:coverage
       
       - name: Upload Coverage Report
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: server-coverage-report
@@ -88,6 +90,7 @@ jobs:
         run: npm run test:coverage
       
       - name: Upload Coverage Report
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: client-coverage-report
@@ -123,7 +126,7 @@ jobs:
           BASE_URL: ${{ secrets.BASE_URL }}
       
       - name: Upload Playwright Test Results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-test-results
