@@ -1,0 +1,86 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment (production, staging, development)'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+          - development
+
+jobs:
+  karate-api-tests:
+    name: Karate API Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Run Karate Tests
+        working-directory: ./karate
+        run: gradle test -Dapi.url="${{ secrets.KARATE_API_URL }}" -Dws.url="${{ secrets.KARATE_WS_URL }}"
+      
+      - name: Upload Karate Test Results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: karate-test-results
+          path: karate/build/reports/tests/test/
+          retention-days: 1
+
+  playwright-e2e-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        working-directory: ./qa
+        run: npm ci --legacy-peer-deps
+      
+      - name: Install Playwright Browsers
+        working-directory: ./qa
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run Playwright Tests
+        working-directory: ./qa
+        run: npx playwright test
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+      
+      - name: Upload Playwright Test Results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: qa/test-results/
+          retention-days: 1
+
+  e2e-test-summary:
+    name: E2E Test Summary
+    needs: [karate-api-tests, playwright-e2e-tests]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Generate Summary
+      run: |
+        echo "## E2E Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Environment: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo " karate-api-tests and playwright-e2e-tests completed." >> $GITHUB_STEP_SUMMARY
