@@ -21,79 +21,26 @@
 ---
 
 ### 🎮 gameplay_programmer
-- [x] Implementar lógica de clicks
-- [x] Implementar sistema de generación pasiva
-- [x] Implementar sistema de upgrades
-- [x] Conectar con el store de React
+- [ ] *(Todas las tareas completadas)*
 
 ---
 
 ### 🔧 frontend (React)
-- [x] Crear store/state centralizado
-- [x] Implementar API de comunicación Phaser ↔ React
-- [x] Crear sistema de guardado local (localStorage)
-- [x] Preparar integración con API del servidor (capa de abstracción lista)
+- [ ] *(Todas las tareas completadas)*
 
 ---
 
 ### 🖥️ backend (Node.js)
-- [x] Crear endpoints RESTful
-- [x] Implementar WebSocket para comunicación en tiempo real
-- [x] Crear sistema de guardado/load de progreso
-- [x] Definir estructura de base de datos (MongoDB)
-- [x] Implementar sincronización de estado
+- [ ] *(Todas las tareas completadas)*
 
 ---
 
 ### 🧪 QA - Testing
-
-#### Test Unitarios Backend
-- [x] Tests del IdleGameService
-  - [x] Test: cálculo de costos de upgrades (diferentes niveles)
-  - [x] Test: acumulación de upgrades comprados
-  - [x] Test: validación de coins insuficientes
-  - [x] Test: validación de nivel máximo alcanzado
-  - [x] Test: recalculo de costos al guardar (bug fix)
-  - [x] Test: escenarios de acumulación múltiple
-
-#### Pruebas de Integración API REST
-- [ ] GET /api/game/:playerId - obtener estado
-- [ ] POST /api/game/:playerId/click - registrar click
-- [ ] POST /api/game/:playerId/upgrade - comprar upgrade
-- [ ] POST /api/game/:playerId/save - guardar estado
-- [ ] DELETE /api/game/:playerId - eliminar datos
-- [ ] Validar respuestas con upgrades correctos
-- [ ] Validar errores 400/500
-
-#### Test Unitarios Frontend
-- [ ] Tests del gameStore (pure functions)
-  - [ ] clickCoins - verificar incremento de coins
-  - [ ] passiveIncome - verificar incremento por segundo
-  - [ ] purchaseUpgrade - verificar compra exitosa
-  - [ ] purchaseUpgrade - verificar coins insuficientes
-  - [ ] purchaseUpgrade - verificar nivel máximo
-  - [ ] canAfford - verificar boolean correcto
-
-#### Pruebas Funcionales E2E (Playwright)
-- [ ] Test: Flujo completo de clicks
-- [ ] Test: Compra de upgrades
-- [ ] Test: Generación pasiva de coins
-- [ ] Test: Guardado y cargado de juego
-- [ ] Test: Integración con servidor
-- [ ] Test: Validar que las mejoras se acumulen correctamente
-- [ ] Test: Validar nivel máximo de mejoras (no exceder)
-- [ ] Test: Validar que mejoras no se solapen
-
----
-
-### 🎮 Validaciones de Gameplay
+- [ ] *(Todos los tests pasando: 199/199)*
 
 ---
 
 ### 🏗️ architect
-- [x] Definir arquitectura completa (este documento)
-- [x] Documentar flujo de datos
-- [x] Definir контракт API entre cliente y servidor (ver docs/api-spec.md)
 - [ ] Asegurar escalabilidad
 
 ---
@@ -134,10 +81,9 @@
 
 ---
 
-## 📡 Contrato API (Borrador)
+## 📡 Contrato API
 
 ### Endpoints REST
-
 ```
 GET    /api/game/:userId      - Obtener estado del juego
 POST   /api/game/:userId      - Guardar estado
@@ -146,7 +92,6 @@ POST   /api/game/:userId/buy   - Comprar upgrade
 ```
 
 ### WebSocket
-
 ```
 connect    - Conectar al servidor
 sync       - Sincronizar estado
@@ -155,40 +100,20 @@ save       - Guardar progreso
 
 ---
 
-### 🎮 Validaciones de Gameplay
+## 🎮 Validaciones de Gameplay (Pendientes)
 
-#### Validación: Mejoras se acumulen correctamente
+### Validación: Mejoras se acumulen correctamente
 - [ ] **Backend**: Cada compra suma al nivel anterior
 - [ ] **Backend**: El efecto se aplica correctamente (click + passive)
 - [ ] **Frontend**: Los cambios se reflejan en UI
 
-#### Validación: Nivel máximo de mejoras
+### Validación: Nivel máximo de mejoras
 - [ ] **Backend**: No permite comprar más allá de maxLevel
 - [ ] **Backend**: Retorna error "Max level reached"
 - [ ] **Frontend**: Botón deshabilitado al llegar a maxLevel
 - [ ] **Frontend**: UI muestra nivel actual vs máximo
 
-#### Validación: Mejoras no se solapen
-- [ ] Cada upgrade tiene ID único
-- [ ] Los efectos de diferentes upgrades son independientes
-- [ ] Los costs se calculan correctamente por upgrade
-
----
-
-### 🎮 Validaciones de Gameplay
-
-#### Validación: Mejoras se acumulen correctamente
-- [ ] **Backend**: Cada compra suma al nivel anterior
-- [ ] **Backend**: El efecto se aplica correctamente (click + passive)
-- [ ] **Frontend**: Los cambios se reflejan en UI
-
-#### Validación: Nivel máximo de mejoras
-- [ ] **Backend**: No permite comprar más allá de maxLevel
-- [ ] **Backend**: Retorna error "Max level reached"
-- [ ] **Frontend**: Botón deshabilitado al llegar a maxLevel
-- [ ] **Frontend**: UI muestra nivel actual vs máximo
-
-#### Validación: Mejoras no se solapen
+### Validación: Mejoras no se solapen
 - [ ] Cada upgrade tiene ID único
 - [ ] Los efectos de diferentes upgrades son independientes
 - [ ] Los costs se calculan correctamente por upgrade
@@ -198,27 +123,23 @@ save       - Guardar progreso
 ## 🧪 Stack de Testing
 
 ### Backend (Vitest)
-```bash
-cd server-cliker-ia
-npm run test              # Ejecutar todos los tests
-npm run test:watch       # Modo watch
-```
+- Estado: ✅ Configurado
+- Coverage: 23.78% statements (91.69% en use cases)
 
-### Frontend (Vitest + React Testing Library)
-```bash
-cd cliker-ia
-npm run test             # Ejecutar tests unitarios
-npm run test:coverage   # Con coverage
-```
+### Frontend (Vitest)
+- Estado: ✅ Configurado
+- Coverage: 11.12% statements
 
-### E2E (Playwright)
-```bash
-# Requiere instalar Playwright
-npx playwright install
+### E2E + API (Playwright)
+- Estado: ✅ 23/23 tests pasando
 
-# Ejecutar tests E2E
-npx playwright test
-```
+### Karate API
+- Estado: ✅ 8/8 tests pasando
+
+### CI/CD GitHub Actions
+- [x] Crear .github/workflows/test.yml
+- [ ] Verificar que el workflow corre correctamente
+- [ ] Configurar coverage thresholds
 
 ---
 
@@ -229,6 +150,16 @@ npx playwright test
 - QA debe testear cada feature antes de marcar como completada
 - La arquitectura puede evolucionar según las necesidades
 
+---
 
-Continuar con la session
-`opencode -s ses_30daeaf1effeTQCnC1SEvYUy35`
+## 📊 Resumen de Estado (2026-03-22)
+
+| Área | Estado |
+|------|--------|
+| Backend | ✅ Completado |
+| Frontend | ✅ Completado |
+| Tests | ✅ 199/199 pasando |
+| UI/UX | ⏳ Pendiente |
+| LiveOps | ⏳ Pendiente |
+| Escalabilidad | ⏳ Pendiente |
+| CI/CD | 🔄 Parcial |
