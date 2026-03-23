@@ -125,8 +125,21 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd ${{ secrets.DEPLOY_PATH }} &&
-            git pull origin main &&
-            npm run db:migrate
-          "
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            APP_DIR=${{ secrets.DEPLOY_PATH }}
+            cd $APP_DIR
+            LOG_FILE="$APP_DIR/deployment_$(date +%Y-%m-%d_%H-%M-%S).log"
+            {
+              echo "🚀 Pulling latest changes..."
+              git pull origin main &&
+              echo "📦 Installing dependencies..."
+              npm ci &&
+              echo "🔄 Running database migrations..."
+              npm run db:migrate &&
+              echo "🧹 Clearing cache..."
+              npm run cache:clear
+            } > $LOG_FILE 2>&1 || {
+              echo "❌ An error occurred during deployment. See $LOG_FILE for details."
+              exit 1
+            }
+          '
