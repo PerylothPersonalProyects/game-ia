@@ -83,7 +83,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           TAG=v${{ steps.version.outputs.VERSION }}
-          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+          if ! git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
             git tag "$TAG"
             git push origin "$TAG"
           else
