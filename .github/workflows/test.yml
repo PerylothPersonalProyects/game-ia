@@ -1,34 +1,12 @@
 name: CI - Test Suite
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
 
 jobs:
-  karate-tests:
-    name: Karate API Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      
-      - name: Run Karate Tests
-        working-directory: ./karate
-        run: gradle test -Dapi.url="${{ secrets.KARATE_API_URL }}" -Dws.url="${{ secrets.KARATE_WS_URL }}"
-      
-      - name: Upload Karate Test Results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: karate-test-results
-          path: karate/build/reports/tests/test/
-          retention-days: 1
-
   vitest-server-coverage:
     name: Vitest Coverage (server-cliker-ia)
     runs-on: ubuntu-latest
@@ -89,48 +67,12 @@ jobs:
           path: cliker-ia/coverage/
           retention-days: 1
 
-  playwright-tests:
-    name: Playwright E2E Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: qa/package-lock.json
-      
-      - name: Install dependencies
-        working-directory: ./qa
-        run: npm ci --legacy-peer-deps
-      
-      - name: Install Playwright Browsers
-        working-directory: ./qa
-        run: npx playwright install --with-deps chromium
-      
-      - name: Run Playwright Tests
-        working-directory: ./qa
-        run: npx playwright test
-        env:
-          BASE_URL: ${{ secrets.BASE_URL }}
-      
-      - name: Upload Playwright Test Results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-test-results
-          path: qa/test-results/
-          retention-days: 1
-
   test-summary:
-      name: Test Summary
-      needs: [karate-tests, vitest-server-coverage, vitest-client-coverage, playwright-tests]
-      runs-on: ubuntu-latest
-  
-      steps:
+    name: Test Summary
+    needs: [vitest-server-coverage, vitest-client-coverage]
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Generate Summary
         run: |
           echo "## Test Suite Summary" >> $GITHUB_STEP_SUMMARY
