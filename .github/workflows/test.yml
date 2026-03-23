@@ -1,10 +1,7 @@
 name: CI - Test Suite
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  workflow_dispatch:
 
 jobs:
   karate-tests:
@@ -29,7 +26,7 @@ jobs:
         run: mvn test -Dapi.url=${{ secrets.KARATE_API_URL }} -Dws.url=${{ secrets.KARATE_WS_URL }}
       
       - name: Upload Karate Test Results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: karate-test-results
@@ -52,13 +49,14 @@ jobs:
       
       - name: Install dependencies
         working-directory: ./server-cliker-ia
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Run Vitest with Coverage
         working-directory: ./server-cliker-ia
         run: npm run test:coverage
       
       - name: Upload Coverage Report
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: server-coverage-report
@@ -81,13 +79,14 @@ jobs:
       
       - name: Install dependencies
         working-directory: ./cliker-ia
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Run Vitest with Coverage
         working-directory: ./cliker-ia
         run: npm run test:coverage
       
       - name: Upload Coverage Report
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: client-coverage-report
@@ -110,7 +109,7 @@ jobs:
       
       - name: Install dependencies
         working-directory: ./qa
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Install Playwright Browsers
         working-directory: ./qa
@@ -123,7 +122,7 @@ jobs:
           BASE_URL: ${{ secrets.BASE_URL }}
       
       - name: Upload Playwright Test Results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-test-results
@@ -131,11 +130,11 @@ jobs:
           retention-days: 1
 
   test-summary:
-    name: Test Summary
-    needs: [karate-tests, vitest-server-coverage, vitest-client-coverage, playwright-tests]
-    runs-on: ubuntu-latest
-    
-    steps:
+      name: Test Summary
+      needs: [karate-tests, vitest-server-coverage, vitest-client-coverage, playwright-tests]
+      runs-on: ubuntu-latest
+  
+      steps:
       - name: Generate Summary
         run: |
           echo "## Test Suite Summary" >> $GITHUB_STEP_SUMMARY

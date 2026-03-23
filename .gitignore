@@ -47,6 +47,17 @@ karate/build/
 karate/bin/
 karate/target/
 karate/.gradle/
+karate/.classpath
+karate/.project
+karate/.settings/
+karate/karate.config.js
+
+# QA (ignorar más outputs)
+qa/test-results/
+qa/playwright-report/
+qa/playwright/.cache/
+qa/videos/
+qa/screenshots/
 
 # OpenSpec
 openspec/changes/archive/
@@ -62,3 +73,5 @@ design-test-coverage-qa.md
 
 # Build artifacts
 *.zip
+
+docs/Secrects.md

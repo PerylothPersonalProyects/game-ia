@@ -52,15 +52,22 @@ describe('UC-005 al UC-010: Casos de Uso Adicionales', () => {
       const playerId = 'player-123';
       await getPlayerUseCase.execute(playerId);
       
-      // Agregar coins
-      const player = await playerRepo.findById(playerId);
-      player!.coins = 1000;
+      // Agregar coins - asegurar suficientes para el upgrade
+      let player = await playerRepo.findById(playerId);
+      player!.coins = 2000; // Aumentar para asegurar
       await playerRepo.update(player!);
       
       // Obtener un upgrade del shop
       const shopUseCase = new GetShopUpgradesUseCase(playerRepo, upgradeConfigRepo);
       const shopUpgrades = await shopUseCase.execute(playerId);
+      
+      // Usar el primer upgrade que exista
       const upgradeToBuy = shopUpgrades[0];
+      
+      // Asegurar que el player tiene suficiente coins para este upgrade específico
+      player = await playerRepo.findById(playerId);
+      player!.coins = upgradeToBuy.cost + 100; // Enough + buffer
+      await playerRepo.update(player!);
       
       const useCase = new BuyShopUpgradeUseCase(playerRepo, upgradeConfigRepo);
       const result = await useCase.execute(playerId, upgradeToBuy.id);

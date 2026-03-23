@@ -3,6 +3,8 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch: 
 
 env:
@@ -25,21 +27,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       # Backend tests
       - name: Install backend dependencies
-        run: cd server-cliker-ia && npm ci
+        working-directory: ./server-cliker-ia
+        run: npm ci
 
       - name: Run backend tests
-        run: cd server-cliker-ia && npm run test
+        working-directory: ./server-cliker-ia
+        run: npm run test
 
       # Frontend tests
       - name: Install frontend dependencies
-        run: cd cliker-ia && npm ci
+        working-directory: ./cliker-ia
+        run: npm ci
 
       - name: Run frontend tests
-        run: cd cliker-ia && npm run test
+        working-directory: ./cliker-ia
+        run: npm run test
 
   build:
     name: Build & Release
@@ -61,23 +66,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Install dependencies
-        run: cd cliker-ia && npm ci
+        working-directory: ./cliker-ia
+        run: npm ci
 
       - name: Build
-        run: cd cliker-ia && npm run build
+        working-directory: ./cliker-ia
+        run: npm run build
 
       - name: Zip build artifacts
-        run: cd cliker-ia && powershell -Command "Compress-Archive -Path dist/* -DestinationPath ../cliker-ia-build.zip -Force"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: cliker-ia-build.zip
-          retention-days: 7
+        working-directory: ./cliker-ia
+        run: zip -r ../cliker-ia-build.zip dist/
 
       - name: Create Git Tag
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -125,8 +125,21 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd ${{ secrets.DEPLOY_PATH }} &&
-            git pull origin main &&
-            npm run db:migrate
-          "
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            APP_DIR=${{ secrets.DEPLOY_PATH }}
+            cd $APP_DIR
+            LOG_FILE="$APP_DIR/deployment_$(date +%Y-%m-%d_%H-%M-%S).log"
+            {
+              echo "🚀 Pulling latest changes..."
+              git pull origin main &&
+              echo "📦 Installing dependencies..."
+              npm ci &&
+              echo "🔄 Running database migrations..."
+              npm run db:migrate &&
+              echo "🧹 Clearing cache..."
+              npm run cache:clear
+            } > $LOG_FILE 2>&1 || {
+              echo "❌ An error occurred during deployment. See $LOG_FILE for details."
+              exit 1
+            }
+          '
