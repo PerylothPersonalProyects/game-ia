@@ -96,6 +96,7 @@ export class IdleGameService {
           purchased: 0,
         }))),
         last_update: BigInt(Date.now()).toString(),
+        updated_at: new Date(),
       });
       
       playerRow = await db('players').where('player_id', playerId).first();
@@ -356,7 +357,7 @@ export class IdleGameService {
     const player = await this.getOrCreatePlayer(playerId);
     console.log('[buyUpgrade] player coins ANTES:', player.coins, 'coinsPerClick:', player.coinsPerClick);
     
-    const upgrade = player.upgrades.find(u => u.id === upgradeId && u.purchased >= 0);
+    const upgrade = player.shopUpgrades?.find(u => u.id === upgradeId);
     if (!upgrade) {
       return { success: false, error: 'Upgrade not found' };
     }
