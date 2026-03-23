@@ -3,8 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
+  workflow_dispatch: 
 
 env:
   NODE_VERSION: '20'
@@ -51,6 +50,8 @@ jobs:
       - name: Run Playwright tests
         run: |
           cd qa && npx playwright test --html --report-html
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
 
       - name: Upload Playwright HTML report
         uses: actions/upload-artifact@v4
@@ -68,7 +69,7 @@ jobs:
 
       - name: Run Karate tests
         run: |
-          cd karate && gradle test
+          cd karate && gradle test -Dapi.url=${{ secrets.KARATE_API_URL }} -Dws.url=${{ secrets.KARATE_WS_URL }}
         working-directory: .
 
       - name: Upload Karate reports

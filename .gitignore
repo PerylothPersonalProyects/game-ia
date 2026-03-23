@@ -40,3 +40,22 @@ server-cliker-ia/dist/
 # Cliente
 cliker-ia/node_modules/
 cliker-ia/dist/
+cliker-ia/coverage/
+
+# Karate (build outputs)
+karate/build/
+karate/bin/
+karate/target/
+karate/.gradle/
+
+# OpenSpec
+openspec/changes/archive/
+openspec/changes/test-coverage-qa/
+openspec/specs/
+
+# Atl
+.atl/
+
+# Coverage
+coverage/
+design-test-coverage-qa.md
