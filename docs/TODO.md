@@ -137,7 +137,8 @@ save       - Guardar progreso
 - Estado: ✅ 8/8 tests pasando
 
 ### CI/CD GitHub Actions
-- [x] Crear .github/workflows/test.yml
+- [x] Crear .github/workflows/ci.yml (tests + build + release)
+- [x] Crear .github/workflows/deploy.yml (SSH deploy + E2E manual)
 - [ ] Verificar que el workflow corre correctamente
 - [ ] Configurar coverage thresholds
 
@@ -159,7 +160,7 @@ save       - Guardar progreso
 | Backend | ✅ Completado |
 | Frontend | ✅ Completado |
 | Tests | ✅ 199/199 pasando |
+| CI/CD | ✅ Configurado |
 | UI/UX | ⏳ Pendiente |
 | LiveOps | ⏳ Pendiente |
 | Escalabilidad | ⏳ Pendiente |
-| CI/CD | 🔄 Parcial |
