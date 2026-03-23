@@ -10,20 +10,25 @@ repositories {
 }
 
 dependencies {
-    // Karate DSL - versión más reciente
-    testImplementation 'com.intuit.karate:karate-core:1.3.1'
-    testImplementation 'com.intuit.karate:karate-junit5:1.3.1'
+    // Karate DSL - versión 1.5.0 con nuevo groupId
+    testImplementation 'io.karatelabs:karate-core:1.5.0'
+    testImplementation 'io.karatelabs:karate-junit5:1.5.0'
     
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
     useJUnitPlatform()
     
-    // Configuración de Karate
-    systemProperty 'karate.config', 'classpath:karate-config.js'
+    // Pasar propiedades del sistema a los tests
+    if (project.hasProperty('apiUrl')) {
+        systemProperty 'apiUrl', project.property('apiUrl')
+    }
+    if (project.hasProperty('wsUrl')) {
+        systemProperty 'wsUrl', project.property('wsUrl')
+    }
     
     // Reportes
     reports {

@@ -14,8 +14,20 @@ function() {
     };
     
     // Si hay variables de entorno o propiedades del sistema, usarlas
-    var apiUrl = karate.properties['api.url'] || karate.envVars['KARATE_API_URL'] || karate.envVars['api_url'];
-    var wsUrl = karate.properties['ws.url'] || karate.envVars['KARATE_WS_URL'] || karate.envVars['ws_url'];
+    // Soporta secrets de GitHub Actions como variables de ambiente
+    var apiUrl = 
+        karate.properties['api.url'] || 
+        karate.envVars['KARATE_API_URL'] || 
+        karate.envVars['apiUrl'] || 
+        karate.envVars['API_URL'] ||
+        java.lang.System.getProperty('apiUrl');
+        
+    var wsUrl = 
+        karate.properties['ws.url'] || 
+        karate.envVars['KARATE_WS_URL'] || 
+        karate.envVars['wsUrl'] || 
+        karate.envVars['WS_URL'] ||
+        java.lang.System.getProperty('wsUrl');
     
     if (apiUrl) {
         config.baseUrl = apiUrl;

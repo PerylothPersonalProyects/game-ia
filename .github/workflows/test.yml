@@ -17,20 +17,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       
-      - name: Build Karate
-        working-directory: ./karate
-        run: mvn compile -q
-      
       - name: Run Karate Tests
         working-directory: ./karate
-        run: mvn test -Dapi.url=${{ secrets.KARATE_API_URL }} -Dws.url=${{ secrets.KARATE_WS_URL }}
+        run: gradle test -PapiUrl=${{ secrets.KARATE_API_URL }} -PwsUrl=${{ secrets.KARATE_WS_URL }}
       
       - name: Upload Karate Test Results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: karate-test-results
-          path: karate/target/surefire-reports/
+          path: karate/build/reports/tests/test/
           retention-days: 1
 
   vitest-server-coverage:
