@@ -82,8 +82,13 @@ jobs:
       - name: Create Git Tag
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          git tag v${{ steps.version.outputs.VERSION }}
-          git push origin v${{ steps.version.outputs.VERSION }}
+          TAG=v${{ steps.version.outputs.VERSION }}
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git tag $TAG
+            git push origin $TAG
+          else
+            echo "Tag $TAG already exists, skipping"
+          fi
 
       - name: Create Release with Build & Test Reports
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
