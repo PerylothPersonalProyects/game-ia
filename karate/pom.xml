@@ -17,28 +17,23 @@
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <karate.version>1.4.0</karate.version>
+        <karate.version>1.4.1</karate.version>
         <junit.version>4.13.2</junit.version>
     </properties>
 
     <dependencies>
-        <!-- Karate Core -->
+        <!-- Karate Core (using new groupId for 1.x) -->
         <dependency>
-            <groupId>com.intuit.karate</groupId>
+            <groupId>io.karatelabs</groupId>
             <artifactId>karate-core</artifactId>
             <version>${karate.version}</version>
         </dependency>
         
-        <!-- Karate Apache HTTP Client -->
-        <dependency>
-            <groupId>com.intuit.karate</groupId>
-            <artifactId>karate-apache</artifactId>
-            <version>${karate.version}</version>
-        </dependency>
+        <!-- Karate Apache HTTP Client (deprecated in 1.x, use karate-core with HttpClient) -->
         
         <!-- Karate JUnit5 -->
         <dependency>
-            <groupId>com.intuit.karate</groupId>
+            <groupId>io.karatelabs</groupId>
             <artifactId>karate-junit5</artifactId>
             <version>${karate.version}</version>
         </dependency>
