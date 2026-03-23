@@ -35,7 +35,6 @@ jobs:
           name: karate-test-results
           path: karate/target/surefire-reports/
           retention-days: 1
-          retention-days: 1
 
   vitest-server-coverage:
     name: Vitest Coverage (server-cliker-ia)
