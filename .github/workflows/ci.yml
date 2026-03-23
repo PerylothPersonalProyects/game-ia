@@ -74,8 +74,7 @@ jobs:
         run: npm run build
 
       - name: Zip build artifacts
-        working-directory: ./cliker-ia
-        run: powershell -Command "Compress-Archive -Path dist/* -DestinationPath ../cliker-ia-build.zip -Force"
+        run: zip -r ../cliker-ia-build.zip dist/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
